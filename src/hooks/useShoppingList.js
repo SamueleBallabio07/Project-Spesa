@@ -245,6 +245,30 @@ export function useShoppingList(session, ensureProfile) {
     [refreshItems]
   );
 
+  const deleteList = useCallback(
+    async (listId) => {
+      if (!supabase || !session) return false;
+
+      const { error: deleteError } = await supabase
+        .from(TABLES.SHOPPING_LISTS)
+        .delete()
+        .eq(COLUMNS.SHOPPING_LISTS.ID, listId);
+
+      if (deleteError) {
+        setError(deleteError.message || 'Impossibile eliminare la lista.');
+        return false;
+      }
+
+      setLists((current) => current.filter((l) => l.id !== listId));
+      if (selectedListId === listId) {
+        setSelectedListId(null);
+        setItems([]);
+      }
+      return true;
+    },
+    [session, selectedListId]
+  );
+
   return {
     items,
     lists,
@@ -258,5 +282,6 @@ export function useShoppingList(session, ensureProfile) {
     removeItem,
     createList,
     switchList,
+    deleteList,
   };
 }

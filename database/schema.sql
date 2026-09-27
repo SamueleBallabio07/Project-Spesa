@@ -41,6 +41,18 @@ CREATE TABLE IF NOT EXISTS shopping_items (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
+-- Prodotti salvati (per riaggiungere velocemente)
+CREATE TABLE IF NOT EXISTS saved_products (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  quantity NUMERIC DEFAULT 1,
+  unit TEXT DEFAULT 'pezzi',
+  category TEXT,
+  notes TEXT,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
 -- Membri della lista (condivisione)
 CREATE TABLE IF NOT EXISTS list_memberships (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),

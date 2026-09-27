@@ -1,11 +1,13 @@
 import { useAuth } from './hooks/useAuth';
 import { useShoppingList } from './hooks/useShoppingList';
+import { useSavedProducts } from './hooks/useSavedProducts';
 import Auth from './components/Auth';
 import ShoppingList from './components/ShoppingList';
 
 function App() {
   const { session, loading, hasSupabaseConfig, signIn, signUp, signOut, ensureProfile } = useAuth();
   const list = useShoppingList(session, ensureProfile);
+  const savedProducts = useSavedProducts(session);
 
   if (loading) {
     return (
@@ -41,7 +43,11 @@ function App() {
       onRemoveItem={list.removeItem}
       onCreateList={list.createList}
       onSwitchList={list.switchList}
+      onDeleteList={list.deleteList}
       onSignOut={signOut}
+      savedProducts={savedProducts.savedProducts}
+      onSaveProduct={savedProducts.saveProduct}
+      onDeleteSavedProduct={savedProducts.deleteSavedProduct}
     />
   );
 }

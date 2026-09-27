@@ -29,7 +29,11 @@ export default function ShoppingList({
   onRemoveItem,
   onCreateList,
   onSwitchList,
+  onDeleteList,
   onSignOut,
+  savedProducts,
+  onSaveProduct,
+  onDeleteSavedProduct,
 }) {
   const [product, setProduct] = useState('');
   const [quantity, setQuantity] = useState(1);
@@ -38,6 +42,8 @@ export default function ShoppingList({
   const [notes, setNotes] = useState('');
   const [newListName, setNewListName] = useState('');
   const [isCreatingList, setIsCreatingList] = useState(false);
+  const [showSaved, setShowSaved] = useState(false);
+  const [confirmDeleteList, setConfirmDeleteList] = useState(null);
 
   const handleAddItem = async (event) => {
     event.preventDefault();
@@ -59,12 +65,42 @@ export default function ShoppingList({
     }
   };
 
+  const handleSaveProduct = async () => {
+    if (!product.trim()) return;
+    const success = await onSaveProduct({ name: product, quantity, unit, category, notes });
+    if (success) {
+      setProduct('');
+      setQuantity(1);
+      setUnit('pezzi');
+      setCategory('');
+      setNotes('');
+    }
+  };
+
   const handleCreateList = async (event) => {
     event.preventDefault();
     setIsCreatingList(true);
     const created = await onCreateList(newListName);
     if (created) setNewListName('');
     setIsCreatingList(false);
+  };
+
+  const handleDeleteList = async (listId) => {
+    if (confirmDeleteList === listId) {
+      await onDeleteList(listId);
+      setConfirmDeleteList(null);
+    } else {
+      setConfirmDeleteList(listId);
+      setTimeout(() => setConfirmDeleteList(null), 3000);
+    }
+  };
+
+  const handleQuickAdd = (savedProduct) => {
+    setProduct(savedProduct.name);
+    setQuantity(savedProduct.quantity);
+    setUnit(savedProduct.unit);
+    setCategory(savedProduct.category || '');
+    setNotes(savedProduct.notes || '');
   };
 
   const selectedList = lists.find((l) => l.id === selectedListId);
@@ -82,15 +118,24 @@ export default function ShoppingList({
           <div className="sidebar-lists">
             <span className="sidebar-label">Seleziona lista</span>
             {lists.map((list) => (
-              <button
-                key={list.id}
-                type="button"
-                className={`sidebar-list-item ${selectedListId === list.id ? 'active' : ''}`}
-                onClick={() => onSwitchList(list.id)}
-              >
-                <span className="sidebar-list-name">{list.name}</span>
-                <span className="sidebar-list-count">{list.itemCount || 0}</span>
-              </button>
+              <div key={list.id} className="sidebar-list-wrapper">
+                <button
+                  type="button"
+                  className={`sidebar-list-item ${selectedListId === list.id ? 'active' : ''}`}
+                  onClick={() => onSwitchList(list.id)}
+                >
+                  <span className="sidebar-list-name">{list.name}</span>
+                  <span className="sidebar-list-count">{list.itemCount || 0}</span>
+                </button>
+                <button
+                  type="button"
+                  className={`sidebar-delete-btn ${confirmDeleteList === list.id ? 'confirm' : ''}`}
+                  onClick={() => handleDeleteList(list.id)}
+                  title={confirmDeleteList === list.id ? 'Clicca di nuovo per confermare' : 'Elimina lista'}
+                >
+                  {confirmDeleteList === list.id ? '?' : '×'}
+                </button>
+              </div>
             ))}
           </div>
 
@@ -141,14 +186,56 @@ export default function ShoppingList({
             <p>Caricamento lista...</p>
           ) : (
             <>
+              {/* Prodotti salvati */}
+              {savedProducts.length > 0 && (
+                <div className="saved-products-section">
+                  <button
+                    type="button"
+                    className="saved-toggle"
+                    onClick={() => setShowSaved(!showSaved)}
+                  >
+                    <span>Prodotti salvati ({savedProducts.length})</span>
+                    <span className="saved-toggle-icon">{showSaved ? '▲' : '▼'}</span>
+                  </button>
+                  {showSaved && (
+                    <div className="saved-products-list">
+                      {savedProducts.map((sp) => (
+                        <div key={sp.id} className="saved-product-item">
+                          <button
+                            type="button"
+                            className="saved-product-add"
+                            onClick={() => handleQuickAdd(sp)}
+                          >
+                            + {sp.name}
+                          </button>
+                          <span className="saved-product-meta">
+                            {formatQuantity(sp.quantity, sp.unit)}
+                            {sp.category && ` · ${sp.category}`}
+                          </span>
+                          <button
+                            type="button"
+                            className="saved-product-delete"
+                            onClick={() => onDeleteSavedProduct(sp.id)}
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Form aggiunta */}
               <form className="add-form" onSubmit={handleAddItem}>
                 <label className="field">
-                  <span>Prodotto</span>
+                  <span>Nome prodotto *</span>
                   <input
                     type="text"
                     value={product}
                     onChange={(e) => setProduct(e.target.value)}
-                    placeholder="Es. Uova"
+                    placeholder="Es. Uova, Latte, Pane..."
+                    required
                   />
                 </label>
 
@@ -195,11 +282,23 @@ export default function ShoppingList({
                   />
                 </label>
 
-                <button type="submit" className="add-button">
-                  Aggiungi
-                </button>
+                <div className="add-form-buttons">
+                  <button type="submit" className="add-button">
+                    Aggiungi
+                  </button>
+                  <button
+                    type="button"
+                    className="save-product-button"
+                    onClick={handleSaveProduct}
+                    disabled={!product.trim()}
+                    title="Salva per riaggiungere velocemente in futuro"
+                  >
+                    Salva
+                  </button>
+                </div>
               </form>
 
+              {/* Lista prodotti */}
               <ul className="shopping-list">
                 {items.length === 0 ? (
                   <li className="empty-state">Nessun prodotto aggiunto ancora.</li>

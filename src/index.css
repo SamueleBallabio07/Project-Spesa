@@ -166,6 +166,46 @@ button:active {
   color: white;
 }
 
+.sidebar-list-wrapper {
+  display: flex;
+  gap: 6px;
+  align-items: stretch;
+}
+
+.sidebar-list-wrapper .sidebar-list-item {
+  flex: 1;
+}
+
+.sidebar-delete-btn {
+  width: 36px;
+  min-width: 36px;
+  border-radius: 12px;
+  background: #fee2e2;
+  color: #dc2626;
+  font-size: 1.2rem;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.sidebar-delete-btn:hover {
+  background: #dc2626;
+  color: white;
+}
+
+.sidebar-delete-btn.confirm {
+  background: #dc2626;
+  color: white;
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
 .sidebar-new {
   display: flex;
   flex-direction: column;
@@ -336,6 +376,118 @@ h1 {
 
 .add-button:hover {
   box-shadow: 0 12px 30px rgba(45, 106, 79, 0.35);
+}
+
+.add-form-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-self: end;
+}
+
+.save-product-button {
+  background: linear-gradient(135deg, #74c69d, #52b788);
+  color: #1b4332;
+  border-radius: 16px;
+  padding: 0 20px;
+  min-height: 48px;
+  font-weight: 800;
+  font-size: 0.9rem;
+}
+
+.save-product-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.saved-products-section {
+  margin-bottom: 20px;
+}
+
+.saved-toggle {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 18px;
+  background: linear-gradient(135deg, #f0f9f0, #e8f5e9);
+  border: 2px solid #b7e4c7;
+  border-radius: 16px;
+  font-weight: 800;
+  color: #2d6a4f;
+  font-size: 0.95rem;
+}
+
+.saved-toggle:hover {
+  background: #d8f3dc;
+}
+
+.saved-toggle-icon {
+  font-size: 0.8rem;
+}
+
+.saved-products-list {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.saved-product-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: white;
+  border: 2px solid #d4edda;
+  border-radius: 14px;
+}
+
+.saved-product-add {
+  flex: 1;
+  text-align: left;
+  background: none;
+  padding: 0;
+  font-weight: 700;
+  color: #2d6a4f;
+  font-size: 0.95rem;
+  transform: none;
+  box-shadow: none;
+}
+
+.saved-product-add:hover {
+  color: #40916c;
+  transform: none;
+  box-shadow: none;
+}
+
+.saved-product-meta {
+  font-size: 0.8rem;
+  color: #52b788;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.saved-product-delete {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #fee2e2;
+  color: #dc2626;
+  font-size: 1rem;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.saved-product-delete:hover {
+  background: #dc2626;
+  color: white;
 }
 
 /* Lista prodotti */
