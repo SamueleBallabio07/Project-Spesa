@@ -41,6 +41,7 @@ function App() {
       onAddItem={list.addItem}
       onToggleItem={list.toggleItem}
       onRemoveItem={list.removeItem}
+      onUpdateItem={list.updateItem}
       onCreateList={list.createList}
       onSwitchList={list.switchList}
       onDeleteList={list.deleteList}

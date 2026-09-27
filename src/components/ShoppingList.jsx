@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { UNIT_OPTIONS, CATEGORY_OPTIONS } from '../lib/schema';
 
 const UNIT_LABELS = {
@@ -27,6 +27,7 @@ export default function ShoppingList({
   onAddItem,
   onToggleItem,
   onRemoveItem,
+  onUpdateItem,
   onCreateList,
   onSwitchList,
   onDeleteList,
@@ -44,11 +45,23 @@ export default function ShoppingList({
   const [isCreatingList, setIsCreatingList] = useState(false);
   const [showSaved, setShowSaved] = useState(false);
   const [confirmDeleteList, setConfirmDeleteList] = useState(null);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [editingItem, setEditingItem] = useState(null);
+  const [editForm, setEditForm] = useState({ name: '', quantity: 1, unit: 'pezzi', category: '', notes: '' });
+  const [targetListId, setTargetListId] = useState(null);
+
+  const suggestions = useMemo(() => {
+    if (!product.trim() || product.trim().length < 2) return [];
+    const search = product.toLowerCase();
+    return savedProducts
+      .filter((sp) => sp.name.toLowerCase().includes(search))
+      .slice(0, 5);
+  }, [product, savedProducts]);
 
   const handleAddItem = async (event) => {
     event.preventDefault();
     const success = await onAddItem({
-      listId: selectedListId,
+      listId: targetListId || selectedListId,
       name: product,
       quantity,
       unit,
@@ -62,19 +75,17 @@ export default function ShoppingList({
       setUnit('pezzi');
       setCategory('');
       setNotes('');
+      setShowSuggestions(false);
     }
   };
 
-  const handleSaveProduct = async () => {
-    if (!product.trim()) return;
-    const success = await onSaveProduct({ name: product, quantity, unit, category, notes });
-    if (success) {
-      setProduct('');
-      setQuantity(1);
-      setUnit('pezzi');
-      setCategory('');
-      setNotes('');
-    }
+  const handleQuickAdd = (savedProduct) => {
+    setProduct(savedProduct.name);
+    setQuantity(savedProduct.quantity);
+    setUnit(savedProduct.unit);
+    setCategory(savedProduct.category || '');
+    setNotes(savedProduct.notes || '');
+    setShowSuggestions(false);
   };
 
   const handleCreateList = async (event) => {
@@ -95,12 +106,34 @@ export default function ShoppingList({
     }
   };
 
-  const handleQuickAdd = (savedProduct) => {
-    setProduct(savedProduct.name);
-    setQuantity(savedProduct.quantity);
-    setUnit(savedProduct.unit);
-    setCategory(savedProduct.category || '');
-    setNotes(savedProduct.notes || '');
+  const startEdit = (item) => {
+    setEditingItem(item.id);
+    setEditForm({
+      name: item.name,
+      quantity: item.quantity,
+      unit: item.unit,
+      category: item.category || '',
+      notes: item.notes || '',
+    });
+  };
+
+  const cancelEdit = () => {
+    setEditingItem(null);
+    setEditForm({ name: '', quantity: 1, unit: 'pezzi', category: '', notes: '' });
+  };
+
+  const saveEdit = async (event) => {
+    event.preventDefault();
+    const success = await onUpdateItem(editingItem, {
+      name: editForm.name.trim(),
+      quantity: Number(editForm.quantity) || 1,
+      unit: editForm.unit,
+      category: editForm.category || null,
+      notes: editForm.notes || null,
+    });
+    if (success) {
+      cancelEdit();
+    }
   };
 
   const selectedList = lists.find((l) => l.id === selectedListId);
@@ -131,7 +164,7 @@ export default function ShoppingList({
                   type="button"
                   className={`sidebar-delete-btn ${confirmDeleteList === list.id ? 'confirm' : ''}`}
                   onClick={() => handleDeleteList(list.id)}
-                  title={confirmDeleteList === list.id ? 'Clicca di nuovo per confermare' : 'Elimina lista'}
+                  title={confirmDeleteList === list.id ? 'Clicca di nuovo per conferma' : 'Elimina lista'}
                 >
                   {confirmDeleteList === list.id ? '?' : '×'}
                 </button>
@@ -212,6 +245,7 @@ export default function ShoppingList({
                             {formatQuantity(sp.quantity, sp.unit)}
                             {sp.category && ` · ${sp.category}`}
                           </span>
+
                           <button
                             type="button"
                             className="saved-product-delete"
@@ -228,16 +262,41 @@ export default function ShoppingList({
 
               {/* Form aggiunta */}
               <form className="add-form" onSubmit={handleAddItem}>
-                <label className="field">
+                <div className="field field-with-suggestions">
                   <span>Nome prodotto *</span>
-                  <input
-                    type="text"
-                    value={product}
-                    onChange={(e) => setProduct(e.target.value)}
-                    placeholder="Es. Uova, Latte, Pane..."
-                    required
-                  />
-                </label>
+                  <div className="suggestions-wrapper">
+                    <input
+                      type="text"
+                      value={product}
+                      onChange={(e) => {
+                        setProduct(e.target.value);
+                        setShowSuggestions(true);
+                      }}
+                      onFocus={() => setShowSuggestions(true)}
+                      onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                      placeholder="Es. Uova, Latte, Pane..."
+                      required
+                    />
+                    {showSuggestions && suggestions.length > 0 && (
+                      <div className="suggestions-dropdown">
+                        {suggestions.map((sp) => (
+                          <button
+                            key={sp.id}
+                            type="button"
+                            className="suggestion-item"
+                            onClick={() => handleQuickAdd(sp)}
+                          >
+                            <span className="suggestion-name">{sp.name}</span>
+                            <span className="suggestion-meta">
+                              {formatQuantity(sp.quantity, sp.unit)}
+                              {sp.category && ` · ${sp.category}`}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
 
                 <label className="field">
                   <span>Quantità</span>
@@ -286,15 +345,6 @@ export default function ShoppingList({
                   <button type="submit" className="add-button">
                     Aggiungi
                   </button>
-                  <button
-                    type="button"
-                    className="save-product-button"
-                    onClick={handleSaveProduct}
-                    disabled={!product.trim()}
-                    title="Salva per riaggiungere velocemente in futuro"
-                  >
-                    Salva
-                  </button>
                 </div>
               </form>
 
@@ -305,30 +355,91 @@ export default function ShoppingList({
                 ) : (
                   items.map((item) => (
                     <li key={item.id} className={`item-row ${item.bought ? 'bought' : ''}`}>
-                      <button
-                        type="button"
-                        className="check-button"
-                        onClick={() => onToggleItem(item.id)}
-                      >
-                        {item.bought ? '✓' : ''}
-                      </button>
+                      {editingItem === item.id ? (
+                        <div className="edit-form-compact">
+                          <input
+                            type="text"
+                            value={editForm.name}
+                            onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                            placeholder="Nome"
+                            required
+                          />
+                          <input
+                            type="number"
+                            min="1"
+                            value={editForm.quantity}
+                            onChange={(e) => setEditForm({ ...editForm, quantity: Number(e.target.value) || 1 })}
+                            title="Quantità"
+                          />
+                          <select
+                            value={editForm.unit}
+                            onChange={(e) => setEditForm({ ...editForm, unit: e.target.value })}
+                            title="Unità"
+                          >
+                            {UNIT_OPTIONS.map((option) => (
+                              <option key={option} value={option}>
+                                {option}
+                              </option>
+                            ))}
+                          </select>
+                          <select
+                            value={editForm.category}
+                            onChange={(e) => setEditForm({ ...editForm, category: e.target.value })}
+                            title="Categoria"
+                          >
+                            <option value="">Nessuna</option>
+                            {CATEGORY_OPTIONS.map((option) => (
+                              <option key={option} value={option}>
+                                {option}
+                              </option>
+                            ))}
+                          </select>
+                          <input
+                            type="text"
+                            value={editForm.notes}
+                            onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
+                            placeholder="Note"
+                          />
+                          <button type="submit" className="edit-save-btn" form="edit-form">Salva</button>
+                          <button type="button" className="edit-cancel-btn" onClick={cancelEdit}>Annulla</button>
+                        </div>
+                      ) : (
+                        <>
+                          <button
+                            type="button"
+                            className="check-button"
+                            onClick={() => onToggleItem(item.id)}
+                          >
+                            {item.bought ? '✓' : ''}
+                          </button>
 
-                      <div className="item-content">
-                        <span className="item-name">{item.name}</span>
-                        <span className="item-meta">
-                          {formatQuantity(item.quantity, item.unit)}
-                          {item.category && ` · ${item.category}`}
-                          {item.notes && ` · ${item.notes}`}
-                        </span>
-                      </div>
+                          <div className="item-content">
+                            <span className="item-name">{item.name}</span>
+                            <span className="item-meta">
+                              {formatQuantity(item.quantity, item.unit)}
+                              {item.category && ` · ${item.category}`}
+                              {item.notes && ` · ${item.notes}`}
+                            </span>
+                          </div>
 
-                      <button
-                        type="button"
-                        className="remove-button"
-                        onClick={() => onRemoveItem(item.id)}
-                      >
-                        Elimina
-                      </button>
+                          <div className="item-actions">
+                            <button
+                              type="button"
+                              className="edit-button"
+                              onClick={() => startEdit(item)}
+                            >
+                              Modifica
+                            </button>
+                            <button
+                              type="button"
+                              className="remove-button"
+                              onClick={() => onRemoveItem(item.id)}
+                            >
+                              Elimina
+                            </button>
+                          </div>
+                        </>
+                      )}
                     </li>
                   ))
                 )}

@@ -329,6 +329,7 @@ h1 {
   background: #f8fdf8;
   border-radius: 20px;
   border: 2px solid #d4edda;
+  align-items: end;
 }
 
 .field {
@@ -345,14 +346,16 @@ h1 {
 .field input,
 .field select {
   width: 100%;
+  height: 52px;
   border: 2px solid #c3e6cb;
   background: white;
   border-radius: 14px;
-  padding: 14px 16px;
+  padding: 0 16px;
   font-size: 1rem;
   font-weight: 600;
   color: #1b4332;
   transition: all 0.2s ease;
+  box-sizing: border-box;
 }
 
 .field input:focus,
@@ -365,13 +368,14 @@ h1 {
 .add-button {
   background: linear-gradient(135deg, #2d6a4f, #40916c);
   color: white;
-  border-radius: 16px;
+  border-radius: 14px;
   padding: 0 28px;
-  min-height: 56px;
+  height: 52px;
   font-weight: 900;
   font-size: 1rem;
   align-self: end;
   box-shadow: 0 8px 20px rgba(45, 106, 79, 0.25);
+  box-sizing: border-box;
 }
 
 .add-button:hover {
@@ -486,6 +490,175 @@ h1 {
 }
 
 .saved-product-delete:hover {
+  background: #dc2626;
+  color: white;
+}
+
+.saved-product-list-select {
+  height: 32px;
+  border: 2px solid #c3e6cb;
+  background: white;
+  border-radius: 8px;
+  padding: 0 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #2d6a4f;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.saved-product-list-select:focus {
+  outline: none;
+  border-color: #40916c;
+}
+
+/* Suggerimenti autocompletamento */
+.field-with-suggestions {
+  position: relative;
+}
+
+.suggestions-wrapper {
+  position: relative;
+}
+
+.suggestions-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 2px solid #b7e4c7;
+  border-radius: 14px;
+  margin-top: 4px;
+  z-index: 100;
+  max-height: 250px;
+  overflow-y: auto;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+}
+
+.suggestion-item {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: none;
+  border: none;
+  border-bottom: 1px solid #e8f5e9;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.suggestion-item:last-child {
+  border-bottom: none;
+}
+
+.suggestion-item:hover {
+  background: #f0f9f0;
+}
+
+.suggestion-name {
+  font-weight: 700;
+  color: #2d6a4f;
+  font-size: 0.95rem;
+}
+
+.suggestion-meta {
+  font-size: 0.8rem;
+  color: #52b788;
+  font-weight: 600;
+  white-space: nowrap;
+  margin-left: 10px;
+}
+
+/* Modifica inline prodotti */
+.item-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.edit-button {
+  background: linear-gradient(135deg, #74c69d, #52b788);
+  color: #1b4332;
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-weight: 700;
+  font-size: 0.8rem;
+}
+
+.edit-form-compact {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  width: 100%;
+  padding: 8px 12px;
+  background: #f0f9f0;
+  border-radius: 12px;
+  border: 2px solid #b7e4c7;
+  flex-wrap: wrap;
+}
+
+.edit-form-compact input,
+.edit-form-compact select {
+  height: 44px;
+  border: 2px solid #c3e6cb;
+  background: white;
+  border-radius: 10px;
+  padding: 0 12px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1b4332;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.edit-form-compact input[type="text"]:first-child {
+  flex: 2;
+  min-width: 100px;
+}
+
+.edit-form-compact input[type="number"] {
+  flex: 0.5;
+  min-width: 50px;
+}
+
+.edit-form-compact select {
+  flex: 1;
+  min-width: 70px;
+}
+
+.edit-form-compact input[type="text"]:last-of-type {
+  flex: 1.5;
+  min-width: 80px;
+}
+
+.edit-form-compact input:focus,
+.edit-form-compact select:focus {
+  outline: none;
+  border-color: #40916c;
+}
+
+.edit-save-btn {
+  background: linear-gradient(135deg, #2d6a4f, #40916c);
+  color: white;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-weight: 800;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.edit-cancel-btn {
+  background: #fee2e2;
+  color: #dc2626;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-weight: 700;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.edit-cancel-btn:hover {
   background: #dc2626;
   color: white;
 }

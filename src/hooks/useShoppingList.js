@@ -143,6 +143,81 @@ export function useShoppingList(session, ensureProfile) {
         return false;
       }
 
+      const normalizedName = cleanName.toLowerCase();
+
+      // Cerca se esiste già un prodotto con lo stesso nome (case-insensitive) in QUALSIASI lista dell'utente
+      const { data: allUserLists } = await supabase
+        .from(TABLES.SHOPPING_LISTS)
+        .select(COLUMNS.SHOPPING_LISTS.ID)
+        .eq(COLUMNS.SHOPPING_LISTS.OWNER_ID, userId);
+
+      const userListIds = (allUserLists || []).map((l) => l[COLUMNS.SHOPPING_LISTS.ID]);
+
+      let existingProduct = null;
+      if (userListIds.length > 0) {
+        const { data: existingItems } = await supabase
+          .from(TABLES.SHOPPING_ITEMS)
+          .select('*')
+          .in(COLUMNS.SHOPPING_ITEMS.LIST_ID, userListIds);
+
+        existingProduct = existingItems?.find(
+          (item) => item[COLUMNS.SHOPPING_ITEMS.NAME].toLowerCase() === normalizedName
+        ) || null;
+      }
+
+      // Se esiste già un prodotto con lo stesso nome in un'altra lista, duplica quel prodotto nella lista corrente
+      // Usa la quantità inserita nel form, non quella del prodotto originale
+      if (existingProduct) {
+        const { error: insertError } = await supabase.from(TABLES.SHOPPING_ITEMS).insert([{
+          [COLUMNS.SHOPPING_ITEMS.LIST_ID]: listId,
+          [COLUMNS.SHOPPING_ITEMS.NAME]: existingProduct[COLUMNS.SHOPPING_ITEMS.NAME],
+          [COLUMNS.SHOPPING_ITEMS.QUANTITY]: Number(quantity) || 1,
+          [COLUMNS.SHOPPING_ITEMS.UNIT]: existingProduct[COLUMNS.SHOPPING_ITEMS.UNIT],
+          [COLUMNS.SHOPPING_ITEMS.BOUGHT]: false,
+          [COLUMNS.SHOPPING_ITEMS.CATEGORY]: existingProduct[COLUMNS.SHOPPING_ITEMS.CATEGORY],
+          [COLUMNS.SHOPPING_ITEMS.NOTES]: existingProduct[COLUMNS.SHOPPING_ITEMS.NOTES],
+          [COLUMNS.SHOPPING_ITEMS.CREATED_BY]: userId,
+        }]);
+
+        if (insertError) {
+          setError(insertError.message || "Errore durante l'aggiunta del prodotto.");
+          return false;
+        }
+
+        setError('');
+        await refreshItems(listId);
+        return true;
+      }
+
+      // Controlla se esiste già nella stessa lista (duplicato nella stessa lista)
+      const { data: sameListItems } = await supabase
+        .from(TABLES.SHOPPING_ITEMS)
+        .select('*')
+        .eq(COLUMNS.SHOPPING_ITEMS.LIST_ID, listId);
+
+      const sameListItem = sameListItems?.find(
+        (item) => item[COLUMNS.SHOPPING_ITEMS.NAME].toLowerCase() === normalizedName
+      );
+
+      if (sameListItem) {
+        const newQuantity = Number(sameListItem[COLUMNS.SHOPPING_ITEMS.QUANTITY]) + (Number(quantity) || 1);
+
+        const { error: updateError } = await supabase
+          .from(TABLES.SHOPPING_ITEMS)
+          .update({ [COLUMNS.SHOPPING_ITEMS.QUANTITY]: newQuantity })
+          .eq(COLUMNS.SHOPPING_ITEMS.ID, sameListItem[COLUMNS.SHOPPING_ITEMS.ID]);
+
+        if (updateError) {
+          setError(updateError.message || "Errore durante l'aggiornamento del prodotto.");
+          return false;
+        }
+
+        setError('');
+        await refreshItems(listId);
+        return true;
+      }
+
+      // Nuovo prodotto (non esiste in nessuna lista)
       const { error: insertError } = await supabase.from(TABLES.SHOPPING_ITEMS).insert([{
         [COLUMNS.SHOPPING_ITEMS.LIST_ID]: listId,
         [COLUMNS.SHOPPING_ITEMS.NAME]: cleanName,
@@ -158,6 +233,16 @@ export function useShoppingList(session, ensureProfile) {
         setError(insertError.message || "Errore durante l'aggiunta del prodotto.");
         return false;
       }
+
+      // Salva automaticamente il prodotto per uso futuro
+      await supabase.from(TABLES.SAVED_PRODUCTS).upsert([{
+        [COLUMNS.SAVED_PRODUCTS.USER_ID]: userId,
+        [COLUMNS.SAVED_PRODUCTS.NAME]: cleanName,
+        [COLUMNS.SAVED_PRODUCTS.QUANTITY]: Number(quantity) || 1,
+        [COLUMNS.SAVED_PRODUCTS.UNIT]: unit,
+        [COLUMNS.SAVED_PRODUCTS.CATEGORY]: category || null,
+        [COLUMNS.SAVED_PRODUCTS.NOTES]: notes || null,
+      }], { onConstraint: `${COLUMNS.SAVED_PRODUCTS.USER_ID},${COLUMNS.SAVED_PRODUCTS.NAME}` });
 
       setError('');
       await refreshItems(listId);
@@ -199,6 +284,27 @@ export function useShoppingList(session, ensureProfile) {
       }
     },
     [selectedListId]
+  );
+
+  const updateItem = useCallback(
+    async (id, updates) => {
+      if (!supabase || !selectedListId) return false;
+
+      const { error: updateError } = await supabase
+        .from(TABLES.SHOPPING_ITEMS)
+        .update(updates)
+        .eq(COLUMNS.SHOPPING_ITEMS.ID, id);
+
+      if (updateError) {
+        setError(updateError.message || 'Errore durante la modifica.');
+        return false;
+      }
+
+      setError('');
+      await refreshItems(selectedListId);
+      return true;
+    },
+    [selectedListId, refreshItems]
   );
 
   const createList = useCallback(
@@ -280,6 +386,7 @@ export function useShoppingList(session, ensureProfile) {
     addItem,
     toggleItem,
     removeItem,
+    updateItem,
     createList,
     switchList,
     deleteList,
