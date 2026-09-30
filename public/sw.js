@@ -1,96 +1,73 @@
-const CACHE_NAME = 'spesa-v1';
+const CACHE_NAME = 'spesa-v2';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
-  '/icon-192.png',
-  '/icon-512.png'
+  '/favicon.png',
+  '/icons/icon-192.png',
+  '/icons/icon-512.png',
+  '/icons/apple-touch-icon.png',
 ];
 
-// Install: cache degli asset statici
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(STATIC_ASSETS);
-    })
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS)).then(() => self.skipWaiting())
   );
-  self.skipWaiting();
 });
 
-// Attivazione: pulizia cache vecchie
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames
-          .filter((name) => name !== CACHE_NAME)
-          .map((name) => caches.delete(name))
-      );
-    })
+    caches
+      .keys()
+      .then((names) => Promise.all(names.filter((n) => n !== CACHE_NAME).map((n) => caches.delete(n))))
+      .then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
-// Fetch: strategia cache-first per asset statici, network-first per API
 self.addEventListener('fetch', (event) => {
   const { request } = event;
-
-  // Solo richieste GET
   if (request.method !== 'GET') return;
 
-  // API Supabase: network-first con fallback cache
-  if (request.url.includes('supabase.co')) {
+  const url = new URL(request.url);
+
+  // Navigazioni: network-first, fallback su index.html cacheata (app offline).
+  if (request.mode === 'navigate') {
     event.respondWith(
       fetch(request)
         .then((response) => {
           const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(request, clone);
-          });
+          caches.open(CACHE_NAME).then((cache) => cache.put('/index.html', clone));
           return response;
         })
-        .catch(() => {
-          return caches.match(request);
-        })
+        .catch(() => caches.match('/index.html'))
     );
     return;
   }
 
-  // Asset statici: cache-first
-  event.respondWith(
-    caches.match(request).then((cached) => {
-      return cached || fetch(request).then((response) => {
-        const clone = response.clone();
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(request, clone);
-        });
-        return response;
-      });
-    })
-  );
-});
-
-// Sincronizzazione background
-self.addEventListener('sync', (event) => {
-  if (event.tag === 'sync-data') {
-    event.waitUntil(syncPendingData());
+  // API Supabase: network-first con cache di riserva.
+  if (url.hostname.endsWith('supabase.co')) {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+          return response;
+        })
+        .catch(() => caches.match(request))
+    );
+    return;
   }
-});
 
-async function syncPendingData() {
-  // La sincronizzazione è gestita lato client con Supabase
-  // Questo è un placeholder per future implementazioni
-  console.log('Background sync triggered');
-}
-
-// Notifiche push (future implementazioni)
-self.addEventListener('push', (event) => {
-  const data = event.data ? event.data.json() : {};
-  const title = data.title || 'Project Spesa';
-  const options = {
-    body: data.body || 'Hai nuovi aggiornamenti',
-    icon: '/icon-192.png',
-    badge: '/icon-192.png'
-  };
-  event.waitUntil(self.registration.showNotification(title, options));
+  // Altro: cache-first.
+  event.respondWith(
+    caches.match(request).then(
+      (cached) =>
+        cached ||
+        fetch(request).then((response) => {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+          return response;
+        })
+    )
+  );
 });

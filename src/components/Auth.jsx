@@ -4,14 +4,17 @@ function formatAuthError(error) {
   const message = error?.message || 'Si è verificato un errore.';
   const lower = message.toLowerCase();
 
-  if (lower.includes('load failed') || lower.includes('failed to fetch') || lower.includes('network') || lower.includes('fetch')) {
-    return 'Supabase non è raggiungibile. Controlla VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY.';
+  if (lower.includes('load failed') || lower.includes('failed to fetch') || lower.includes('network')) {
+    return 'Supabase non è raggiungibile. Controlla le variabili VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY.';
   }
-  if (lower.includes('signups are disabled') || lower.includes('sign up is disabled') || lower.includes('email signups are disabled')) {
-    return 'La registrazione email è disattivata in Supabase. Apri Authentication > Providers > Email e abilitala.';
+  if (lower.includes('signups are disabled') || lower.includes('sign up is disabled')) {
+    return 'La registrazione email è disattivata in Supabase. Abilitala in Authentication → Providers → Email.';
+  }
+  if (lower.includes('email not confirmed')) {
+    return 'Controlla la tua email e conferma l’indirizzo prima di accedere.';
   }
   if (lower.includes('invalid login credentials')) {
-    return 'Credenziali non valide. Controlla email e password.';
+    return 'Credenziali non valide.';
   }
   if (lower.includes('user already registered')) {
     return 'Questa email è già registrata. Prova ad accedere.';
@@ -24,29 +27,30 @@ export default function Auth({ hasSupabaseConfig, onSignIn, onSignUp }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError('');
+    setNotice('');
 
     if (!email.trim() || !password.trim()) {
       setError('Inserisci email e password.');
       return;
     }
     if (!hasSupabaseConfig) {
-      setError('Configura VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY in .env');
+      setError('Configura VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY nel file .env');
       return;
     }
 
     setLoading(true);
     try {
-      const { error: authError } = mode === 'signup'
-        ? await onSignUp(email, password)
-        : await onSignIn(email, password);
+      const { error: authError } =
+        mode === 'signup' ? await onSignUp(email, password) : await onSignIn(email, password);
 
       if (authError) throw authError;
-      if (mode === 'signup') setError('Registrazione completata. Controlla la tua email.');
+      if (mode === 'signup') setNotice('Registrazione completata. Controlla la tua email.');
     } catch (err) {
       setError(formatAuthError(err));
     } finally {
@@ -55,9 +59,9 @@ export default function Auth({ hasSupabaseConfig, onSignIn, onSignUp }) {
   };
 
   return (
-    <main className="app-shell">
-      <section className="auth-card">
-        <p className="eyebrow">Accesso</p>
+    <div className="auth">
+      <div className="auth-card">
+        <p className="eyebrow">Project Spesa</p>
         <h1>{mode === 'signin' ? 'Accedi' : 'Registrati'}</h1>
 
         <form className="auth-form" onSubmit={handleSubmit}>
@@ -68,6 +72,10 @@ export default function Auth({ hasSupabaseConfig, onSignIn, onSignUp }) {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="tu@esempio.it"
+              autoComplete="email"
+              autoCapitalize="none"
+              autoCorrect="off"
+              required
             />
           </label>
 
@@ -78,33 +86,40 @@ export default function Auth({ hasSupabaseConfig, onSignIn, onSignUp }) {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
+              autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
+              required
             />
           </label>
 
-          {error && <p className="auth-error">{error}</p>}
+          {error ? <p className="alert">{error}</p> : null}
+          {notice ? <p className="alert" style={{ background: 'rgba(52,199,89,.14)', color: '#1b7f37' }}>{notice}</p> : null}
 
-          <button type="submit" className="primary-button" disabled={loading}>
-            {loading ? 'Caricamento...' : mode === 'signin' ? 'Accedi' : 'Registrati'}
+          <button type="submit" className="btn btn-primary" disabled={loading}>
+            {loading ? 'Attendi…' : mode === 'signin' ? 'Accedi' : 'Registrati'}
           </button>
         </form>
 
-        <button
-          type="button"
-          className="switch-button"
-          onClick={() => {
-            setMode((m) => (m === 'signin' ? 'signup' : 'signin'));
-            setError('');
-          }}
-        >
-          {mode === 'signin' ? 'Non hai un account? Registrati' : 'Hai già un account? Accedi'}
-        </button>
+        <p className="auth-switch">
+          {mode === 'signin' ? 'Non hai un account? ' : 'Hai già un account? '}
+          <button
+            type="button"
+            onClick={() => {
+              setMode((m) => (m === 'signin' ? 'signup' : 'signin'));
+              setError('');
+              setNotice('');
+            }}
+          >
+            {mode === 'signin' ? 'Registrati' : 'Accedi'}
+          </button>
+        </p>
 
         {!hasSupabaseConfig && (
           <p className="config-note">
-            Per usare il login, crea un file .env con VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY.
+            Per usare il login crea un file <code>.env</code> con VITE_SUPABASE_URL e
+            VITE_SUPABASE_ANON_KEY.
           </p>
         )}
-      </section>
-    </main>
+      </div>
+    </div>
   );
 }

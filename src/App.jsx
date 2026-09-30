@@ -5,46 +5,33 @@ import { useOfflineSync } from './hooks/useOfflineSync';
 import Auth from './components/Auth';
 import ShoppingList from './components/ShoppingList';
 
-function App() {
+export default function App() {
   const { session, loading, hasSupabaseConfig, signIn, signUp, signOut, ensureProfile } = useAuth();
   const list = useShoppingList(session, ensureProfile);
-  const savedProducts = useSavedProducts(session);
+  const saved = useSavedProducts(session);
   const { isOnline, pendingChanges, syncing } = useOfflineSync();
 
   if (loading) {
     return (
-      <main className="app-shell">
-        <section className="list-card">
-          <p>Caricamento...</p>
-        </section>
-      </main>
+      <div className="auth">
+        <p className="loading">Caricamento…</p>
+      </div>
     );
   }
 
   if (!session) {
-    return (
-      <Auth
-        hasSupabaseConfig={hasSupabaseConfig}
-        onSignIn={signIn}
-        onSignUp={signUp}
-      />
-    );
+    return <Auth hasSupabaseConfig={hasSupabaseConfig} onSignIn={signIn} onSignUp={signUp} />;
   }
 
   return (
-    <div className="app-wrapper">
-      {/* Indicatore offline */}
+    <>
       {!isOnline && (
         <div className="offline-banner">
-          <span>Sei offline. Le modifiche verranno sincronizzate quando torni online.</span>
-          {pendingChanges > 0 && <span className="pending-badge">{pendingChanges} in attesa</span>}
+          Sei offline
+          {pendingChanges > 0 ? ` · ${pendingChanges} modifiche da sincronizzare` : ''}
         </div>
       )}
-      {isOnline && syncing && (
-        <div className="sync-banner">
-          <span>Sincronizzazione in corso...</span>
-        </div>
-      )}
+      {isOnline && syncing && <div className="sync-banner">Sincronizzazione…</div>}
 
       <ShoppingList
         session={session}
@@ -62,12 +49,9 @@ function App() {
         onSwitchList={list.switchList}
         onDeleteList={list.deleteList}
         onSignOut={signOut}
-        savedProducts={savedProducts.savedProducts}
-        onSaveProduct={savedProducts.saveProduct}
-        onDeleteSavedProduct={savedProducts.deleteSavedProduct}
+        savedProducts={saved.savedProducts}
+        onDeleteSavedProduct={saved.deleteSavedProduct}
       />
-    </div>
+    </>
   );
 }
-
-export default App;
