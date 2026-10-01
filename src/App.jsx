@@ -13,7 +13,7 @@ export default function App() {
   const { session, loading, hasSupabaseConfig, signIn, signUp, signOut, ensureProfile } = useAuth();
   const list = useShoppingList(session, ensureProfile);
   const saved = useSavedProducts(session);
-  const catalog = useFoodCatalog(session);
+  const catalog = useFoodCatalog();
   const { isOnline, pendingChanges, syncing } = useOfflineSync();
 
   const [tab, setTab] = useState('lists');
@@ -83,6 +83,7 @@ export default function App() {
             error={catalog.error}
             categories={catalog.categories}
             search={catalog.search}
+            ensureLoaded={catalog.ensureLoaded}
             onAddFood={handleAddFood}
           />
         )}

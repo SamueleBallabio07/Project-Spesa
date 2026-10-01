@@ -26,42 +26,45 @@ Esegui in ordine, nel SQL Editor di Supabase:
 |------|---------|
 | `database/schema.sql` | Tabelle core, RLS, indici, storage avatar |
 | `database/remove-duplicates.sql` | Pulisce i prodotti duplicati |
-| `database/food_catalog.sql` | Tabella del catalogo alimentare |
-| `database/food_catalog_usda.sql` | ~7.500 alimenti con valori USDA (generato) |
 
-Il catalogo si popola solo da SQL: la policy RLS consente la lettura ma non
-la scrittura dal client.
+Nel database stanno solo i tuoi dati: liste, prodotti, prodotti usati in precedenza.
+Il **catalogo alimentare non è nel database**.
 
 ## Catalogo: USDA FoodData Central
 
 I valori nutrizionali vengono da **USDA FoodData Central (SR Legacy)**, dati in
-pubblico dominio (CC0 1.0). Non sono stime: sono analisi di laboratorio o
-calcoli dell'USDA.
+pubblico dominio (CC0 1.0). Non sono stime: sono analisi di laboratorio o calcoli
+dell'USDA.
 
-Per rigenerare il catalogo:
+Il catalogo è un **file statico** servito dal CDN: nessuna tabella, nessuna
+query, nessuna chiave API. ~7.500 alimenti compressi in 240 KB, scaricati solo
+alla prima apertura della scheda Prodotti e poi tenuti in cache dal service
+worker, quindi funziona anche offline.
+
+Per rigenerarlo:
 
 ```bash
 curl -sL -o sr.zip \
   "https://fdc.nal.usda.gov/fdc-datasets/FoodData_Central_sr_legacy_food_csv_2018-04.zip"
 unzip -q sr.zip
-node scripts/import-usda.mjs
+node scripts/build-catalog.mjs
 ```
 
 Lo script unisce quattro CSV (`food`, `food_nutrient`, `food_portion`,
 `food_category`), estrae i cinque nutrienti necessari e sceglie il peso di "un
-pezzo" dalle porzioni USDA, scartando quelle in volume. Poi scrive
-`database/food_catalog_usda.sql`, da incollare nel SQL Editor.
+pezzo" dalle porzioni USDA scartando quelle in volume. Poi scrive
+`public/catalog.json`, versionato con il codice: per aggiornare i valori basta
+`npm run build` e il deploy.
 
 Note sui dati:
 
 - **Per 100g**: i valori seguono la convenzione USDA, la conversione in
   grammi la fa `src/lib/nutrition.js`
-- `unit_default` è `pezzi` solo se esiste una porzione singola non in volume,
-  altrimenti `g`
+- `unit` è `pezzi` solo se esiste una porzione singola non in volume, altrimenti `g`
 - Le voci con marche note vengono scartate, ma la blocklist non è esaustiva:
   la selezione definitiva la fa il passaggio curato
-- `label_it` è vuoto: compilandolo l'app mostra il nome italiano
-  (`label_it || name`) e cerca su entrambi
+- I nomi sono in inglese come li pubblica l'USDA; il campo `sn` è la versione
+  breve per la UI
 
 ## Struttura
 
@@ -107,6 +110,6 @@ in grammi e ricalcola:
 ## Script
 
 ```bash
-node scripts/make-icons.mjs   # rigenera le icone PNG dell'app
-node scripts/import-usda.mjs  # rigenera il catalogo dagli ZIP USDA
+node scripts/make-icons.mjs     # rigenera le icone PNG dell'app
+node scripts/build-catalog.mjs  # rigenera public/catalog.json dagli ZIP USDA
 ```

@@ -1,33 +1,23 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { supabase } from '../lib/supabase';
-import { TABLES, COLUMNS } from '../lib/schema';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-const C = COLUMNS.FOOD_CATALOG;
+const CATALOG_URL = '/catalog.json';
 
-// I valori del catalogo sono gia' per 100g (convenzione USDA).
-const normalize = (row) => {
-  const name = row[C.NAME] || '';
-  const labelIt = row[C.LABEL_IT] || '';
-
-  return {
-    fdcId: row[C.FDC_ID],
-    name,
-    shortName: row[C.SHORT_NAME] || name,
-    // in italiano appena curato, altrimenti il nome USDA
-    displayName: labelIt || name,
-    labelIt,
-    category: row[C.USDA_CATEGORY] || 'Altro',
-    unitDefault: row[C.UNIT_DEFAULT] || 'g',
-    gramsPerUnit: row[C.GRAMS_PER_UNIT] === null ? null : Number(row[C.GRAMS_PER_UNIT]),
-    kcal100g: Number(row[C.KCAL_100G]) || 0,
-    protein100g: Number(row[C.PROTEIN_100G]) || 0,
-    carbs100g: Number(row[C.CARBS_100G]) || 0,
-    fat100g: Number(row[C.FAT_100G]) || 0,
-    fiber100g: Number(row[C.FIBER_100G]) || 0,
-    sizeLabel: row[C.SIZE_LABEL] || '',
-    verified: Boolean(row[C.VERIFIED]),
-  };
-};
+const normalize = (row) => ({
+  fdcId: row.id,
+  name: row.name,
+  shortName: row.sn,
+  // in italiano appena curato, altrimenti il nome USDA
+  displayName: row.sn || row.name,
+  category: row.cat,
+  unitDefault: row.unit,
+  gramsPerUnit: row.gpu,
+  kcal100g: row.kcal,
+  protein100g: row.p,
+  carbs100g: row.c,
+  fat100g: row.f,
+  fiber100g: row.fib,
+  sizeLabel: row.size || '',
+});
 
 // Tollie accenti e maiuscole: "Parmigiano" deve trovare "parmigiano".
 const normalizeText = (value) =>
@@ -36,54 +26,51 @@ const normalizeText = (value) =>
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '');
 
-export function useFoodCatalog(session) {
+/**
+ * Catalogo alimentare USDA, caricato come file statico.
+ * Non usa il database: nessuna chiave API, nessuna query, funziona offline.
+ * Il caricamento avviene su richiesta, non al login.
+ */
+export function useFoodCatalog() {
   const [foods, setFoods] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const started = useRef(false);
 
-  const fetchCatalog = useCallback(async () => {
-    if (!supabase || !session) {
-      setFoods([]);
-      setLoading(false);
-      return;
-    }
+  const ensureLoaded = useCallback(async () => {
+    if (started.current) return;
+    started.current = true;
 
     setLoading(true);
     setError('');
 
-    const { data, error: fetchError } = await supabase
-      .from(TABLES.FOOD_CATALOG)
-      .select('*')
-      .order(C.NAME);
+    try {
+      const response = await fetch(CATALOG_URL);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
-    if (fetchError) {
-      setError(
-        'Catalogo non disponibile. Crea la tabella con database/food_catalog.sql e importala con database/food_catalog_usda.sql.'
-      );
-      setFoods([]);
-    } else {
-      setFoods((data || []).map(normalize));
+      const rows = await response.json();
+      setFoods(rows.map(normalize));
+    } catch (err) {
+      started.current = false; // permette di riprovare
+      setError('Catalogo non disponibile. Controlla la connessione e ricarica.');
+      console.error('Catalogo:', err);
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
-  }, [session]);
-
-  useEffect(() => {
-    fetchCatalog();
-  }, [fetchCatalog]);
+  }, []);
 
   const categories = useMemo(() => {
     const unique = [...new Set(foods.map((f) => f.category))];
     return unique.sort((a, b) => a.localeCompare(b, 'en'));
   }, [foods]);
 
-  // Indice pre-normalizzato, costruito una volta sola: la ricerca
-  // su 7.800 righe a ogni keystroke costerebbe troppo.
+  // Indice pre-normalizzato, costruito una volta: cercare fra 7.500 righe
+  // a ogni keystroke sarebbe costoso.
   const index = useMemo(
     () =>
       foods.map((food) => ({
         food,
-        haystack: normalizeText([food.name, food.shortName, food.labelIt].join(' ')),
+        haystack: normalizeText(food.name),
       })),
     [foods]
   );
@@ -103,12 +90,19 @@ export function useFoodCatalog(session) {
     [index]
   );
 
+  // Libera il catalogo quando si smonta (logout, cambio vista lunga).
+  useEffect(() => {
+    return () => {
+      started.current = false;
+    };
+  }, []);
+
   return {
     foods,
     categories,
     loading,
     error,
     search,
-    refresh: fetchCatalog,
+    ensureLoaded,
   };
 }

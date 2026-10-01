@@ -1,4 +1,4 @@
-const CACHE_NAME = 'spesa-v2';
+const CACHE_NAME = 'spesa-v3';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -8,6 +8,10 @@ const STATIC_ASSETS = [
   '/icons/icon-512.png',
   '/icons/apple-touch-icon.png',
 ];
+
+// Il catalogo alimentare e' un file statico: lo mettiamo in cache al primo
+// utilizzo, non all'installazione, cosi' l'installazione resta veloce.
+const CATALOG = '/catalog.json';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -54,6 +58,27 @@ self.addEventListener('fetch', (event) => {
           return response;
         })
         .catch(() => caches.match(request))
+    );
+    return;
+  }
+
+  // Catalogo: cache-first con rivalidazione in background.
+  // Alla prima visita scarica ~240KB; poi e' istantaneo e funziona offline,
+  // mentre un catalogo aggiornato arriva al caricamento successivo.
+  if (url.pathname === CATALOG) {
+    event.respondWith(
+      caches.open(CACHE_NAME).then((cache) =>
+        cache.match(CATALOG).then((cached) => {
+          const revalidate = fetch(request)
+            .then((response) => {
+              if (response.ok) cache.put(CATALOG, response.clone());
+              return response;
+            })
+            .catch(() => cached);
+
+          return cached || revalidate;
+        })
+      )
     );
     return;
   }

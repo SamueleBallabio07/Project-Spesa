@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { nutritionFor, formatNutrition, formatMacros } from '../lib/nutrition';
 
 const ALL = '__all__';
@@ -11,12 +11,18 @@ export default function CatalogScreen({
   error,
   categories,
   search,
+  ensureLoaded,
   onAddFood,
 }) {
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState(ALL);
   const [picked, setPicked] = useState({});
   const [added, setAdded] = useState({});
+
+  // Il catalogo si scarica solo quando apri questa scheda.
+  useEffect(() => {
+    ensureLoaded();
+  }, [ensureLoaded]);
 
   const matches = useMemo(
     () => search(query, category === ALL ? null : category),
