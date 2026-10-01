@@ -206,12 +206,369 @@ button {
 }
 
 /* ---------------- contenuto ---------------- */
+/* ============ SCHELMO APP ============ */
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+}
+
+.screen-wrap {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.screen {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* contenuto scrollabile */
+.content,
+.catalog {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ============ TAB BAR (iOS) ============ */
+.tabbar {
+  position: sticky;
+  bottom: 0;
+  z-index: 40;
+  display: flex;
+  background: rgba(249, 249, 249, 0.86);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  border-top: 1px solid var(--separator);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.tab {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-height: 49px;
+  padding: 7px 0 6px;
+  color: var(--label-2);
+  transition: color 0.15s ease;
+}
+
+.tab.is-active {
+  color: var(--tint);
+}
+
+.tab-icon {
+  width: 25px;
+  height: 25px;
+}
+
+.tab-label {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+.tab:active {
+  opacity: 0.55;
+}
+
+/* ============ CATALOGO ============ */
+.catalog {
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 8px var(--pad) 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.target-list {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 12px 16px;
+  background: var(--card);
+  border-radius: var(--radius-card);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+.target-list-label {
+  font-size: 13px;
+  color: var(--label-2);
+}
+.target-list-name {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--tint-dark);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.searchbar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  min-height: 40px;
+  background: rgba(118, 118, 128, 0.12);
+  border-radius: 12px;
+}
+.searchbar svg {
+  width: 18px;
+  height: 18px;
+  color: var(--label-2);
+  flex: 0 0 auto;
+}
+.searchbar input {
+  flex: 1;
+  min-width: 0;
+  min-height: 40px;
+  border: 0;
+  background: none;
+  font-size: 17px;
+  outline: none;
+}
+.searchbar input::placeholder {
+  color: var(--label-2);
+}
+.searchbar input::-webkit-search-cancel-button {
+  display: none;
+}
+.searchbar-clear {
+  flex: 0 0 auto;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(118, 118, 128, 0.24);
+  color: #fff;
+  font-size: 17px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chips-scroll {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  margin: 0 calc(var(--pad) * -1);
+  padding: 0 var(--pad);
+}
+.chips-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.chip {
+  flex: 0 0 auto;
+  min-height: 34px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: rgba(118, 118, 128, 0.12);
+  color: var(--label);
+  font-size: 15px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.chip.is-active {
+  background: var(--tint);
+  color: #fff;
+}
+
+/* i figli non devono comprimersi: il contenitore è già scrollabile */
+.catalog > *,
+.content > * {
+  flex: 0 0 auto;
+}
+
+.results-count {
+  margin: 0;
+  font-size: 13px;
+  color: var(--label-2);
+  padding-left: 4px;
+}
+
+.food-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.food {
+  background: var(--card);
+  border-radius: var(--radius-card);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.food-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.food-title {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.food-name {
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.food-cat {
+  font-size: 13px;
+  color: var(--label-2);
+}
+
+.food-kcal {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--tint-dark);
+  font-variant-numeric: tabular-nums;
+}
+.food-kcal small {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--label-2);
+}
+
+.food-macros {
+  display: flex;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--label-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.food-add {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.stepper {
+  display: flex;
+  align-items: center;
+  background: rgba(118, 118, 128, 0.12);
+  border-radius: 999px;
+  padding: 2px;
+  flex: 0 0 auto;
+}
+.stepper button {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--card);
+  color: var(--label);
+  font-size: 19px;
+  line-height: 1;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+.stepper button:active {
+  background: var(--tint);
+  color: #fff;
+}
+.stepper-value {
+  min-width: 62px;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.stepper-value small {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--label-2);
+  margin-left: 2px;
+}
+
+.food-add-btn {
+  flex: 1;
+  min-height: 40px;
+  font-size: 16px;
+}
+.food-add-btn.is-added {
+  background: var(--tint-dark);
+}
+
+.food-nutrition {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-top: 10px;
+  border-top: 1px solid var(--separator);
+}
+.food-nutrition-main {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--label);
+  font-variant-numeric: tabular-nums;
+}
+.food-nutrition-macros {
+  font-size: 13px;
+  color: var(--label-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.section-head-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding-left: 4px;
+}
+
+.link-btn {
+  color: var(--blue);
+  font-size: 15px;
+  font-weight: 500;
+  min-height: 32px;
+  padding: 0 2px;
+}
+.link-btn:active {
+  opacity: 0.5;
+}
+
 .content {
   flex: 1;
   width: 100%;
   max-width: 720px;
   margin: 0 auto;
-  padding: 8px var(--pad) calc(env(safe-area-inset-bottom) + 32px);
+  padding: 8px var(--pad) 28px;
   display: flex;
   flex-direction: column;
   gap: var(--gap);
@@ -775,25 +1132,31 @@ select.field-input {
     --gap: 28px;
   }
 
-  .app {
-    flex-direction: row;
-    align-items: stretch;
+  .tabbar {
+    flex: 0 0 auto;
   }
 
+  .tab {
+    min-height: 52px;
+  }
+
+  /* su desktop la lista delle liste diventa una colonna a sinistra */
+  .screen {
+    flex-direction: row;
+  }
   .sidebar {
     flex: 0 0 288px;
-    border-bottom: 0;
+    width: 288px;
     border-right: 1px solid var(--separator);
-    padding: calc(env(safe-area-inset-top) + 28px) 0 28px;
-    position: sticky;
-    top: 0;
-    height: 100dvh;
+    border-bottom: 0;
+    padding: 28px 0;
     overflow-y: auto;
+    min-height: 0;
   }
   .sidebar-inner {
     padding: 0 20px;
     max-width: none;
-    height: 100%;
+    min-height: 100%;
   }
 
   .lists {
@@ -829,7 +1192,16 @@ select.field-input {
   }
 
   .content {
-    padding: 0 32px calc(env(safe-area-inset-bottom) + 40px);
+    padding: 0 32px 40px;
+  }
+
+  .catalog {
+    padding: 8px 32px 40px;
+  }
+
+  .food-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .form-rows {

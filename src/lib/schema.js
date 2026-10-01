@@ -8,6 +8,7 @@ export const TABLES = {
   SHOPPING_LISTS: 'shopping_lists',
   SHOPPING_ITEMS: 'shopping_items',
   SAVED_PRODUCTS: 'saved_products',
+  FOOD_CATALOG: 'food_catalog',
   LIST_MEMBERSHIPS: 'list_memberships',
   LIST_INVITATIONS: 'list_invitations',
   SHOPPING_ITEMS_HISTORY: 'shopping_items_history',
@@ -72,6 +73,20 @@ export const COLUMNS = {
     CATEGORY: 'category',
     NOTES: 'notes',
     CREATED_AT: 'created_at',
+  },
+  FOOD_CATALOG: {
+    ID: 'id',
+    NAME: 'name',
+    ALIASES: 'aliases',
+    CATEGORY: 'category',
+    UNIT_DEFAULT: 'unit_default',
+    GRAMS_PER_UNIT: 'grams_per_unit',
+    KCAL_100G: 'kcal_100g',
+    PROTEIN_100G: 'protein_100g',
+    CARBS_100G: 'carbs_100g',
+    FAT_100G: 'fat_100g',
+    FIBER_100G: 'fiber_100g',
+    VERIFIED: 'verified',
   },
 };
 

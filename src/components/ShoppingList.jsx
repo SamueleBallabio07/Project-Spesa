@@ -34,6 +34,7 @@ export default function ShoppingList({
   onSignOut,
   savedProducts,
   onDeleteSavedProduct,
+  onGoToCatalog,
 }) {
   const [product, setProduct] = useState('');
   const [quantity, setQuantity] = useState(1);
@@ -135,7 +136,7 @@ export default function ShoppingList({
   const selectedList = lists.find((l) => l.id === selectedListId);
 
   return (
-    <div className="app">
+    <div className="screen">
       {/* ============ SIDEBAR / SELEZIONE LISTE ============ */}
       <aside className="sidebar">
         <div className="sidebar-inner">
@@ -254,7 +255,14 @@ export default function ShoppingList({
 
             {/* Aggiunta prodotto */}
             <section className="section">
-              <h2 className="section-head">Aggiungi un prodotto</h2>
+              <div className="section-head-row">
+                <h2 className="section-head">Aggiungi a mano</h2>
+                {onGoToCatalog && (
+                  <button type="button" className="link-btn" onClick={onGoToCatalog}>
+                    Sfoglia catalogo
+                  </button>
+                )}
+              </div>
               <form className="group form-rows" onSubmit={handleAddItem}>
                 <div className="field-row field-row-stack">
                   <label className="field-label" htmlFor="f-name">
