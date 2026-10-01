@@ -27,10 +27,41 @@ Esegui in ordine, nel SQL Editor di Supabase:
 | `database/schema.sql` | Tabelle core, RLS, indici, storage avatar |
 | `database/remove-duplicates.sql` | Pulisce i prodotti duplicati |
 | `database/food_catalog.sql` | Tabella del catalogo alimentare |
-| `database/food_catalog_seed.sql` | ~85 alimenti base con valori nutrizionali |
+| `database/food_catalog_usda.sql` | ~7.500 alimenti con valori USDA (generato) |
 
 Il catalogo si popola solo da SQL: la policy RLS consente la lettura ma non
 la scrittura dal client.
+
+## Catalogo: USDA FoodData Central
+
+I valori nutrizionali vengono da **USDA FoodData Central (SR Legacy)**, dati in
+pubblico dominio (CC0 1.0). Non sono stime: sono analisi di laboratorio o
+calcoli dell'USDA.
+
+Per rigenerare il catalogo:
+
+```bash
+curl -sL -o sr.zip \
+  "https://fdc.nal.usda.gov/fdc-datasets/FoodData_Central_sr_legacy_food_csv_2018-04.zip"
+unzip -q sr.zip
+node scripts/import-usda.mjs
+```
+
+Lo script unisce quattro CSV (`food`, `food_nutrient`, `food_portion`,
+`food_category`), estrae i cinque nutrienti necessari e sceglie il peso di "un
+pezzo" dalle porzioni USDA, scartando quelle in volume. Poi scrive
+`database/food_catalog_usda.sql`, da incollare nel SQL Editor.
+
+Note sui dati:
+
+- **Per 100g**: i valori seguono la convenzione USDA, la conversione in
+  grammi la fa `src/lib/nutrition.js`
+- `unit_default` è `pezzi` solo se esiste una porzione singola non in volume,
+  altrimenti `g`
+- Le voci con marche note vengono scartate, ma la blocklist non è esaustiva:
+  la selezione definitiva la fa il passaggio curato
+- `label_it` è vuoto: compilandolo l'app mostra il nome italiano
+  (`label_it || name`) e cerca su entrambi
 
 ## Struttura
 
@@ -61,15 +92,11 @@ in grammi e ricalcola:
 - unità di peso o volume (`g`, `kg`, `ml`, `l`) → conversione diretta
 - unità di conteggio (`pezzi`, `buste`, `scatole`) → quantità × `grams_per_unit`
 
-Ogni riga ha un flag `verified`, `false` di default: i valori iniziali sono
-indicativi. Passalo a `true` solo dopo averli controllati su una fonte
-autorevole (es. USDA FoodData Central) se ti servono per calcolare una dieta.
-
 ## Funzionalità
 
 - Login con email e password
 - Più liste della spesa, creazione ed eliminazione
-- Catalogo alimentare con valori nutrizionali e ricerca su alias senza accenti
+- Catalogo di ~7.500 alimenti generici con valori USDA, ricerca senza accenti
 - Stepper per la quantità con ricalcolo immediato di calorie e macronutrienti
 - Aggiunta manuale come alternativa al catalogo
 - Autocompletamento dai prodotti usati in precedenza
@@ -81,4 +108,5 @@ autorevole (es. USDA FoodData Central) se ti servono per calcolare una dieta.
 
 ```bash
 node scripts/make-icons.mjs   # rigenera le icone PNG dell'app
+node scripts/import-usda.mjs  # rigenera il catalogo dagli ZIP USDA
 ```

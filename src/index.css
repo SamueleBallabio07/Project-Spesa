@@ -538,6 +538,21 @@ button {
   color: var(--label);
   font-variant-numeric: tabular-nums;
 }
+
+.food-size {
+  margin-left: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--label-2);
+}
+
+.results-more {
+  margin: 0;
+  padding: 0 4px;
+  font-size: 13px;
+  color: var(--label-2);
+  text-align: center;
+}
 .food-nutrition-macros {
   font-size: 13px;
   color: var(--label-2);

@@ -75,10 +75,11 @@ export const COLUMNS = {
     CREATED_AT: 'created_at',
   },
   FOOD_CATALOG: {
-    ID: 'id',
+    FDC_ID: 'fdc_id',
     NAME: 'name',
-    ALIASES: 'aliases',
-    CATEGORY: 'category',
+    SHORT_NAME: 'short_name',
+    LABEL_IT: 'label_it',
+    USDA_CATEGORY: 'usda_category',
     UNIT_DEFAULT: 'unit_default',
     GRAMS_PER_UNIT: 'grams_per_unit',
     KCAL_100G: 'kcal_100g',
@@ -86,6 +87,7 @@ export const COLUMNS = {
     CARBS_100G: 'carbs_100g',
     FAT_100G: 'fat_100g',
     FIBER_100G: 'fiber_100g',
+    SIZE_LABEL: 'size_label',
     VERIFIED: 'verified',
   },
 };

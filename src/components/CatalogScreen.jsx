@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { nutritionFor, formatNutrition, formatMacros } from '../lib/nutrition';
 
 const ALL = '__all__';
+const VISIBLE = 40;
 
 export default function CatalogScreen({
   selectedListId,
@@ -14,43 +15,48 @@ export default function CatalogScreen({
 }) {
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState(ALL);
-  // id -> quantità scelta, con default 1 (o 100g per i pesi)
   const [picked, setPicked] = useState({});
   const [added, setAdded] = useState({});
 
-  const results = useMemo(() => search(query, category === ALL ? null : category), [search, query, category]);
+  const matches = useMemo(
+    () => search(query, category === ALL ? null : category),
+    [search, query, category]
+  );
+  const results = matches.slice(0, VISIBLE);
 
-  const pickQty = (food, next) => {
-    const step = food.unitDefault === 'pezzi' ? 1 : food.unitDefault === 'kg' ? 0.1 : 10;
-    const value = Math.max(step, Math.round((Number(next) || step) / step) * step);
-    const rounded = Math.round(value * 100) / 100;
-    setPicked((prev) => ({ ...prev, [food.id]: rounded }));
-  };
+  const stepFor = (food) =>
+    food.unitDefault === 'pezzi' ? 1 : food.unitDefault === 'kg' ? 0.1 : 10;
 
   const initialQty = (food) => {
-    if (picked[food.id] !== undefined) return picked[food.id];
+    if (picked[food.fdcId] !== undefined) return picked[food.fdcId];
     if (food.unitDefault === 'kg') return 0.5;
-    if (food.unitDefault === 'pezzi') return 2;
+    if (food.unitDefault === 'pezzi') return 1;
     return 100;
+  };
+
+  const pickQty = (food, next) => {
+    const step = stepFor(food);
+    const value = Math.max(step, Number(next) || step);
+    const rounded = Math.round(value * 100) / 100;
+    setPicked((prev) => ({ ...prev, [food.fdcId]: rounded }));
   };
 
   const handleAdd = async (food) => {
     if (!selectedListId) return;
-    const quantity = initialQty(food);
 
     const ok = await onAddFood({
-      name: food.name,
-      quantity,
+      name: food.displayName,
+      quantity: initialQty(food),
       unit: food.unitDefault,
       category: food.category,
     });
 
     if (ok) {
-      setAdded((prev) => ({ ...prev, [food.id]: Date.now() }));
+      setAdded((prev) => ({ ...prev, [food.fdcId]: true }));
       window.setTimeout(() => {
         setAdded((prev) => {
           const next = { ...prev };
-          delete next[food.id];
+          delete next[food.fdcId];
           return next;
         });
       }, 1400);
@@ -61,7 +67,7 @@ export default function CatalogScreen({
     <div className="catalog">
       <header className="topbar">
         <div className="topbar-text">
-          <p className="topbar-sub">Catalogo alimentare</p>
+          <p className="topbar-sub">Catalogo USDA</p>
           <h1>Prodotti</h1>
         </div>
       </header>
@@ -86,7 +92,12 @@ export default function CatalogScreen({
           enterKeyHint="search"
         />
         {query && (
-          <button type="button" className="searchbar-clear" onClick={() => setQuery('')} aria-label="Cancella ricerca">
+          <button
+            type="button"
+            className="searchbar-clear"
+            onClick={() => setQuery('')}
+            aria-label="Cancella ricerca"
+          >
             ×
           </button>
         )}
@@ -118,86 +129,100 @@ export default function CatalogScreen({
       {!loading && !error && (
         <>
           <p className="results-count">
-            {results.length} {results.length === 1 ? 'alimento' : 'alimenti'}
+            {matches.length === 0
+              ? 'Nessun alimento'
+              : `${matches.length} ${matches.length === 1 ? 'alimento' : 'alimenti'}`}
           </p>
 
-          {results.length === 0 ? (
+          {matches.length === 0 ? (
             <div className="empty">
               <p className="empty-title">Nessun risultato</p>
               <p className="empty-body">
                 {query ? <>Non c’è “{query}” nel catalogo.</> : 'Catalogo vuoto per questa categoria.'}
               </p>
-              <p className="empty-hint">
-                Puoi comunque aggiungerlo a mano dalla scheda Liste.
-              </p>
+              <p className="empty-hint">Puoi comunque aggiungerlo a mano dalla scheda Liste.</p>
             </div>
           ) : (
-            <ul className="food-list">
-              {results.map((food) => {
-                const quantity = initialQty(food);
-                const nutrition = nutritionFor(food, quantity, food.unitDefault);
-                const justAdded = Boolean(added[food.id]);
-                const step = food.unitDefault === 'pezzi' ? 1 : food.unitDefault === 'kg' ? 0.1 : 10;
+            <>
+              <ul className="food-list">
+                {results.map((food) => {
+                  const quantity = initialQty(food);
+                  const nutrition = nutritionFor(food, quantity, food.unitDefault);
+                  const justAdded = Boolean(added[food.fdcId]);
+                  const step = stepFor(food);
 
-                return (
-                  <li key={food.id} className="food">
-                    <div className="food-head">
-                      <div className="food-title">
-                        <span className="food-name">{food.name}</span>
-                        <span className="food-cat">{food.category}</span>
-                      </div>
-                      <span className="food-kcal">
-                        {food.kcal100g}
-                        <small>kcal/100g</small>
-                      </span>
-                    </div>
-
-                    <div className="food-macros">
-                      <span>P {food.protein100g}g</span>
-                      <span>C {food.carbs100g}g</span>
-                      <span>F {food.fat100g}g</span>
-                    </div>
-
-                    <div className="food-add">
-                      <div className="stepper">
-                        <button
-                          type="button"
-                          onClick={() => pickQty(food, quantity - step)}
-                          aria-label={`Diminua quantità di ${food.name}`}
-                        >
-                          −
-                        </button>
-                        <span className="stepper-value">
-                          {quantity}
-                          <small>{food.unitDefault}</small>
+                  return (
+                    <li key={food.fdcId} className="food">
+                      <div className="food-head">
+                        <div className="food-title">
+                          <span className="food-name">{food.displayName}</span>
+                          <span className="food-cat">{food.category}</span>
+                        </div>
+                        <span className="food-kcal">
+                          {food.kcal100g}
+                          <small>kcal/100g</small>
                         </span>
+                      </div>
+
+                      <div className="food-macros">
+                        <span>P {food.protein100g}g</span>
+                        <span>C {food.carbs100g}g</span>
+                        <span>F {food.fat100g}g</span>
+                        {food.fiber100g > 0 && <span>Fib {food.fiber100g}g</span>}
+                      </div>
+
+                      <div className="food-add">
+                        <div className="stepper">
+                          <button
+                            type="button"
+                            onClick={() => pickQty(food, quantity - step)}
+                            aria-label={`Diminua quantità di ${food.displayName}`}
+                          >
+                            −
+                          </button>
+                          <span className="stepper-value">
+                            {quantity}
+                            <small>{food.unitDefault}</small>
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => pickQty(food, quantity + step)}
+                            aria-label={`Aumenta quantità di ${food.displayName}`}
+                          >
+                            +
+                          </button>
+                        </div>
+
                         <button
                           type="button"
-                          onClick={() => pickQty(food, quantity + step)}
-                          aria-label={`Aumenta quantità di ${food.name}`}
+                          className={`btn btn-primary food-add-btn ${justAdded ? 'is-added' : ''}`}
+                          onClick={() => handleAdd(food)}
+                          disabled={!selectedListId}
                         >
-                          +
+                          {justAdded ? 'Aggiunto ✓' : 'Aggiungi'}
                         </button>
                       </div>
 
-                      <button
-                        type="button"
-                        className={`btn btn-primary food-add-btn ${justAdded ? 'is-added' : ''}`}
-                        onClick={() => handleAdd(food)}
-                        disabled={!selectedListId}
-                      >
-                        {justAdded ? 'Aggiunto ✓' : 'Aggiungi'}
-                      </button>
-                    </div>
+                      <div className="food-nutrition">
+                        <span className="food-nutrition-main">
+                          {formatNutrition(nutrition, food.unitDefault)}
+                          {food.sizeLabel && food.unitDefault === 'pezzi' && (
+                            <small className="food-size">1 {food.sizeLabel}</small>
+                          )}
+                        </span>
+                        <span className="food-nutrition-macros">{formatMacros(nutrition)}</span>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
 
-                    <div className="food-nutrition">
-                      <span className="food-nutrition-main">{formatNutrition(nutrition, food.unitDefault)}</span>
-                      <span className="food-nutrition-macros">{formatMacros(nutrition)}</span>
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
+              {matches.length > results.length && (
+                <p className="results-more">
+                  {matches.length - results.length} altri risultati: restringi la ricerca.
+                </p>
+              )}
+            </>
           )}
         </>
       )}

@@ -4,23 +4,34 @@ import { TABLES, COLUMNS } from '../lib/schema';
 
 const C = COLUMNS.FOOD_CATALOG;
 
-const normalize = (row) => ({
-  id: row[C.ID],
-  name: row[C.NAME],
-  aliases: row[C.ALIASES] || [],
-  category: row[C.CATEGORY],
-  unitDefault: row[C.UNIT_DEFAULT] || 'g',
-  gramsPerUnit: row[C.GRAMS_PER_UNIT] === null ? null : Number(row[C.GRAMS_PER_UNIT]),
-  kcal100g: Number(row[C.KCAL_100G]) || 0,
-  protein100g: Number(row[C.PROTEIN_100G]) || 0,
-  carbs100g: Number(row[C.CARBS_100G]) || 0,
-  fat100g: Number(row[C.FAT_100G]) || 0,
-  fiber100g: Number(row[C.FIBER_100G]) || 0,
-  verified: Boolean(row[C.VERIFIED]),
-});
+// I valori del catalogo sono gia' per 100g (convenzione USDA).
+const normalize = (row) => {
+  const name = row[C.NAME] || '';
+  const labelIt = row[C.LABEL_IT] || '';
 
+  return {
+    fdcId: row[C.FDC_ID],
+    name,
+    shortName: row[C.SHORT_NAME] || name,
+    // in italiano appena curato, altrimenti il nome USDA
+    displayName: labelIt || name,
+    labelIt,
+    category: row[C.USDA_CATEGORY] || 'Altro',
+    unitDefault: row[C.UNIT_DEFAULT] || 'g',
+    gramsPerUnit: row[C.GRAMS_PER_UNIT] === null ? null : Number(row[C.GRAMS_PER_UNIT]),
+    kcal100g: Number(row[C.KCAL_100G]) || 0,
+    protein100g: Number(row[C.PROTEIN_100G]) || 0,
+    carbs100g: Number(row[C.CARBS_100G]) || 0,
+    fat100g: Number(row[C.FAT_100G]) || 0,
+    fiber100g: Number(row[C.FIBER_100G]) || 0,
+    sizeLabel: row[C.SIZE_LABEL] || '',
+    verified: Boolean(row[C.VERIFIED]),
+  };
+};
+
+// Tollie accenti e maiuscole: "Parmigiano" deve trovare "parmigiano".
 const normalizeText = (value) =>
-  value
+  String(value)
     .toLowerCase()
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '');
@@ -47,7 +58,7 @@ export function useFoodCatalog(session) {
 
     if (fetchError) {
       setError(
-        'Catalogo non disponibile. Esegui database/food_catalog.sql e food_catalog_seed.sql su Supabase.'
+        'Catalogo non disponibile. Crea la tabella con database/food_catalog.sql e importala con database/food_catalog_usda.sql.'
       );
       setFoods([]);
     } else {
@@ -63,15 +74,16 @@ export function useFoodCatalog(session) {
 
   const categories = useMemo(() => {
     const unique = [...new Set(foods.map((f) => f.category))];
-    return unique.sort((a, b) => a.localeCompare(b, 'it'));
+    return unique.sort((a, b) => a.localeCompare(b, 'en'));
   }, [foods]);
 
-  // Indice di ricerca pre-normalizzato: nome + alias, senza accenti.
+  // Indice pre-normalizzato, costruito una volta sola: la ricerca
+  // su 7.800 righe a ogni keystroke costerebbe troppo.
   const index = useMemo(
     () =>
       foods.map((food) => ({
         food,
-        haystack: normalizeText([food.name, ...food.aliases].join(' ')),
+        haystack: normalizeText([food.name, food.shortName, food.labelIt].join(' ')),
       })),
     [foods]
   );
@@ -80,13 +92,13 @@ export function useFoodCatalog(session) {
     (query, category) => {
       const q = normalizeText(query.trim());
 
-      return index
-        .filter(({ food, haystack }) => {
-          const matchesCategory = !category || food.category === category;
-          const matchesQuery = !q || haystack.includes(q);
-          return matchesCategory && matchesQuery;
-        })
-        .map(({ food }) => food);
+      const matches = [];
+      for (const { food, haystack } of index) {
+        if (category && food.category !== category) continue;
+        if (q && !haystack.includes(q)) continue;
+        matches.push(food);
+      }
+      return matches;
     },
     [index]
   );
