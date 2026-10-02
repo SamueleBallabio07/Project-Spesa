@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from './hooks/useAuth';
 import { useShoppingList } from './hooks/useShoppingList';
 import { useSavedProducts } from './hooks/useSavedProducts';
@@ -19,6 +19,13 @@ export default function App() {
   const { isOnline, pendingChanges, syncing } = useOfflineSync();
 
   const [tab, setTab] = useState('lists');
+
+  // Carica il catalogo in background appena l'utente è autenticato
+  useEffect(() => {
+    if (session) {
+      catalog.ensureLoaded();
+    }
+  }, [session, catalog]);
 
   if (loading) {
     return (
