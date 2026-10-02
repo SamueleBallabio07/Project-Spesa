@@ -17,10 +17,23 @@ const read = (p) => readFileSync(new URL(p, root), 'utf8');
 const gitignore = read('.gitignore');
 const pkg = JSON.parse(read('package.json'));
 
-/** File tracciati da git: cioe' quelli che finirebbero pubblici. */
-const tracked = execFileSync('git', ['ls-files'], { encoding: 'utf8' })
-  .split('\n')
-  .filter(Boolean);
+/**
+ * File tracciati da git: cioe' quelli che finirebbero pubblici.
+ *
+ * `git ls-files` da solo elenca anche i file rimossi dalla working tree ma non
+ * ancora committati, e il test li aprirebbe: togliere una skill faceva
+ * fallire la guardia con ENOENT. Si escludono quelli.
+ */
+const pathsOf = (args) =>
+  execFileSync('git', ['ls-files', ...args], { encoding: 'utf8' })
+    .split('\n')
+    .map((line) => line.slice(3)) // "XY path" -> "path"
+    .filter(Boolean);
+
+/** File rimossi dalla working tree: non esistono piu' e non andrebbero letti. */
+const deleted = new Set(pathsOf(['-d']));
+
+const tracked = pathsOf([]).filter((p) => !deleted.has(p));
 
 /**
  * File che documentano le regole invece di usarle: AGENTS.md, le skill e i
