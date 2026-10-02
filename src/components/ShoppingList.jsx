@@ -193,7 +193,7 @@ export default function ShoppingList({
         {loadingItems ? (
           <p className="loading">Caricamento…</p>
         ) : (
-          <>
+          <div className="content-inner">
             {/* Ricerca catalogo - modo principale per aggiungere */}
             <section className="section">
               <div className="section-head-row">
@@ -346,7 +346,7 @@ export default function ShoppingList({
                 </ul>
               )}
             </section>
-          </>
+          </div>
         )}
 
         <footer className="foot">

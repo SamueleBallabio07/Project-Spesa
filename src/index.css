@@ -363,6 +363,14 @@ button {
   gap: 16px;
 }
 
+/* Contenitore centrato per il contenuto della lista */
+.content-inner {
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0 var(--pad);
+}
+
 .target-list {
   display: flex;
   align-items: baseline;
@@ -391,7 +399,7 @@ button {
   align-items: center;
   gap: 8px;
   padding: 0 12px;
-  min-height: 40px;
+  min-height: var(--tap);
   background: var(--separator);
   border-radius: 12px;
 }
@@ -404,7 +412,7 @@ button {
 .searchbar input {
   flex: 1;
   min-width: 0;
-  min-height: 40px;
+  min-height: var(--tap);
   border: 0;
   background: none;
   font-size: 17px;
@@ -554,8 +562,8 @@ button {
   flex: 0 0 auto;
 }
 .stepper button {
-  width: 34px;
-  height: 34px;
+  width: var(--tap);
+  height: var(--tap);
   border-radius: 50%;
   background: var(--card);
   color: var(--text);
@@ -572,7 +580,7 @@ button {
   color: var(--text-inverse);
 }
 .stepper-value {
-  min-width: 62px;
+  min-width: 72px;
   text-align: center;
   font-size: 16px;
   font-weight: 600;
@@ -587,7 +595,7 @@ button {
 
 .food-add-btn {
   flex: 1;
-  min-height: 40px;
+  min-height: var(--tap);
   font-size: 16px;
 }
 .food-add-btn.is-added {
