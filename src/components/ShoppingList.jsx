@@ -307,63 +307,6 @@ export default function ShoppingList({
                 </ul>
               )}
             </section>
-
-            {/* Prodotti nella lista */}
-            <section className="section">
-              <h2 className="section-head">Prodotti</h2>
-              {items.length === 0 ? (
-                <p className="empty">Non c'è ancora niente in questa lista.</p>
-              ) : (
-                <ul className="group">
-                  {items.map((item) => (
-                    <li key={item.id} className={`item ${item.bought ? 'is-done' : ''}`}>
-                      <div className="item-row">
-                        <button
-                          type="button"
-                          className="check"
-                          onClick={() => onToggleItem(item.id)}
-                          role="checkbox"
-                          aria-checked={item.bought}
-                          aria-label={item.bought ? `Segna ${item.name} da prendere` : `Segna ${item.name} come comprato`}
-                        >
-                          {item.bought ? '✓' : ''}
-                        </button>
-
-                        <div className="item-text">
-                          <span className="item-name">{item.name}</span>
-                          <span className="item-meta">
-                            {formatQuantity(item.quantity, item.unit)}
-                            {item.category ? ` · ${item.category}` : ''}
-                            {item.notes ? ` · ${item.notes}` : ''}
-                          </span>
-                        </div>
-
-                        <div className="item-actions">
-                          <button
-                            type="button"
-                            className="row-action is-danger"
-                            onClick={() => onRemoveItem(item.id)}
-                            aria-label={`Elimina ${item.name}`}
-                          >
-                            <svg
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="1.7"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              aria-hidden="true"
-                            >
-                              <path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" />
-                            </svg>
-                          </button>
-                        </div>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
           </>
         )}
 
