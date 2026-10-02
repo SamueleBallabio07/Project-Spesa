@@ -38,7 +38,12 @@ CREATE TABLE IF NOT EXISTS shopping_items (
   category TEXT,
   notes TEXT,
   created_by UUID REFERENCES auth.users(id),
-  created_at TIMESTAMPTZ DEFAULT now()
+  created_at TIMESTAMPTZ DEFAULT now(),
+  kcal100g NUMERIC,
+  protein100g NUMERIC,
+  carbs100g NUMERIC,
+  fat100g NUMERIC,
+  fiber100g NUMERIC
 );
 
 -- Prodotti salvati (per riaggiungere velocemente)
@@ -55,7 +60,12 @@ CREATE TABLE IF NOT EXISTS saved_products (
   unit TEXT DEFAULT 'pezzi',
   category TEXT,
   notes TEXT,
-  created_at TIMESTAMPTZ DEFAULT now()
+  created_at TIMESTAMPTZ DEFAULT now(),
+  kcal100g NUMERIC,
+  protein100g NUMERIC,
+  carbs100g NUMERIC,
+  fat100g NUMERIC,
+  fiber100g NUMERIC
 );
 
 DO $$

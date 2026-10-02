@@ -34,7 +34,7 @@ export default function App() {
 
   const selectedList = list.lists.find((l) => l.id === list.selectedListId);
 
-  const handleAddFood = ({ name, quantity, unit, category }) =>
+  const handleAddFood = ({ name, quantity, unit, category, kcal100g, protein100g, carbs100g, fat100g, fiber100g }) =>
     list.addItem({
       listId: list.selectedListId,
       name,
@@ -43,6 +43,11 @@ export default function App() {
       category,
       notes: null,
       userId: session.user.id,
+      kcal100g,
+      protein100g,
+      carbs100g,
+      fat100g,
+      fiber100g,
     });
 
   return (
@@ -76,6 +81,8 @@ export default function App() {
             savedProducts={saved.savedProducts}
             onDeleteSavedProduct={saved.deleteSavedProduct}
             onGoToCatalog={() => setTab('products')}
+            catalogSearch={catalog.search}
+            onAddFood={handleAddFood}
           />
         ) : (
           <CatalogScreen

@@ -136,7 +136,21 @@ export function useShoppingList(session, ensureProfile) {
   }, [session, ensureProfile, refreshItems]);
 
   const addItem = useCallback(
-    async ({ listId, name, quantity, unit, category, notes, userId }) => {
+    async ({
+      listId,
+      name,
+      quantity,
+      unit,
+      category,
+      notes,
+      userId,
+      // Valori nutrizionali per 100g (opzionali, convenzione USDA)
+      kcal100g,
+      protein100g,
+      carbs100g,
+      fat100g,
+      fiber100g,
+    }) => {
       const cleanName = name.trim();
       if (!cleanName || !supabase || !session || !listId) {
         setError('Non riesco a trovare la tua lista. Ricarica la pagina.');
@@ -166,7 +180,7 @@ export function useShoppingList(session, ensureProfile) {
       }
 
       // Se esiste già un prodotto con lo stesso nome in un'altra lista, duplica quel prodotto nella lista corrente
-      // Usa la quantità inserita nel form, non quella del prodotto originale
+      // Usa la quantità inserita nel form, ma copia i valori nutrizionali dal prodotto esistente
       if (existingProduct) {
         const { error: insertError } = await supabase.from(TABLES.SHOPPING_ITEMS).insert([{
           [COLUMNS.SHOPPING_ITEMS.LIST_ID]: listId,
@@ -176,6 +190,11 @@ export function useShoppingList(session, ensureProfile) {
           [COLUMNS.SHOPPING_ITEMS.BOUGHT]: false,
           [COLUMNS.SHOPPING_ITEMS.CATEGORY]: existingProduct[COLUMNS.SHOPPING_ITEMS.CATEGORY],
           [COLUMNS.SHOPPING_ITEMS.NOTES]: existingProduct[COLUMNS.SHOPPING_ITEMS.NOTES],
+          [COLUMNS.SHOPPING_ITEMS.KCAL100G]: existingProduct[COLUMNS.SHOPPING_ITEMS.KCAL100G] ?? null,
+          [COLUMNS.SHOPPING_ITEMS.PROTEIN100G]: existingProduct[COLUMNS.SHOPPING_ITEMS.PROTEIN100G] ?? null,
+          [COLUMNS.SHOPPING_ITEMS.CARBS100G]: existingProduct[COLUMNS.SHOPPING_ITEMS.CARBS100G] ?? null,
+          [COLUMNS.SHOPPING_ITEMS.FAT100G]: existingProduct[COLUMNS.SHOPPING_ITEMS.FAT100G] ?? null,
+          [COLUMNS.SHOPPING_ITEMS.FIBER100G]: existingProduct[COLUMNS.SHOPPING_ITEMS.FIBER100G] ?? null,
           [COLUMNS.SHOPPING_ITEMS.CREATED_BY]: userId,
         }]);
 
@@ -226,6 +245,11 @@ export function useShoppingList(session, ensureProfile) {
         [COLUMNS.SHOPPING_ITEMS.BOUGHT]: false,
         [COLUMNS.SHOPPING_ITEMS.CATEGORY]: category || null,
         [COLUMNS.SHOPPING_ITEMS.NOTES]: notes || null,
+        [COLUMNS.SHOPPING_ITEMS.KCAL100G]: kcal100g ?? null,
+        [COLUMNS.SHOPPING_ITEMS.PROTEIN100G]: protein100g ?? null,
+        [COLUMNS.SHOPPING_ITEMS.CARBS100G]: carbs100g ?? null,
+        [COLUMNS.SHOPPING_ITEMS.FAT100G]: fat100g ?? null,
+        [COLUMNS.SHOPPING_ITEMS.FIBER100G]: fiber100g ?? null,
         [COLUMNS.SHOPPING_ITEMS.CREATED_BY]: userId,
       }]);
 
@@ -234,10 +258,7 @@ export function useShoppingList(session, ensureProfile) {
         return false;
       }
 
-      // Salva automaticamente il prodotto per uso futuro. Il prodotto e' gia
-      // stato aggiunto alla lista, quindi un fallimento qui non deve bloccare
-      // l'aggiunta: si logga perche' altrimenti il salvataggio manca in
-      // silenzio (vincolo Unique assente, rete assente, RLS che filtrano).
+      // Salva automaticamente il prodotto per uso futuro (con valori nutrizionali se presenti).
       const { error: saveError } = await supabase.from(TABLES.SAVED_PRODUCTS).upsert([{
         [COLUMNS.SAVED_PRODUCTS.USER_ID]: userId,
         [COLUMNS.SAVED_PRODUCTS.NAME]: cleanName,
@@ -245,6 +266,11 @@ export function useShoppingList(session, ensureProfile) {
         [COLUMNS.SAVED_PRODUCTS.UNIT]: unit,
         [COLUMNS.SAVED_PRODUCTS.CATEGORY]: category || null,
         [COLUMNS.SAVED_PRODUCTS.NOTES]: notes || null,
+        [COLUMNS.SAVED_PRODUCTS.KCAL100G]: kcal100g ?? null,
+        [COLUMNS.SAVED_PRODUCTS.PROTEIN100G]: protein100g ?? null,
+        [COLUMNS.SAVED_PRODUCTS.CARBS100G]: carbs100g ?? null,
+        [COLUMNS.SAVED_PRODUCTS.FAT100G]: fat100g ?? null,
+        [COLUMNS.SAVED_PRODUCTS.FIBER100G]: fiber100g ?? null,
       }], { onConstraint: `${COLUMNS.SAVED_PRODUCTS.USER_ID},${COLUMNS.SAVED_PRODUCTS.NAME}` });
 
       if (saveError) {

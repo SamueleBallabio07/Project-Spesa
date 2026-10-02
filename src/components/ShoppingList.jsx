@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { UNIT_OPTIONS, CATEGORY_OPTIONS } from '../lib/schema';
 import { ThemeToggle } from './ThemeToggle';
 
@@ -36,6 +36,8 @@ export default function ShoppingList({
   savedProducts,
   onDeleteSavedProduct,
   onGoToCatalog,
+  catalogSearch,
+  onAddFood,
 }) {
   const [product, setProduct] = useState('');
   const [quantity, setQuantity] = useState(1);
@@ -49,6 +51,9 @@ export default function ShoppingList({
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [editForm, setEditForm] = useState({ name: '', quantity: 1, unit: 'pezzi', category: '', notes: '' });
+  const [catalogQuery, setCatalogQuery] = useState('');
+  const [catalogResults, setCatalogResults] = useState([]);
+  const [showManual, setShowManual] = useState(false);
 
   const suggestions = useMemo(() => {
     const search = product.trim().toLowerCase();
@@ -74,6 +79,35 @@ export default function ShoppingList({
       setCategory('');
       setNotes('');
       setShowSuggestions(false);
+    }
+  };
+
+  // Ricerca catalogo inline
+  useEffect(() => {
+    if (catalogQuery.trim().length >= 2 && catalogSearch) {
+      const results = catalogSearch(catalogQuery.trim());
+      setCatalogResults(results.slice(0, 10));
+    } else {
+      setCatalogResults([]);
+    }
+  }, [catalogQuery, catalogSearch]);
+
+  const handleCatalogAdd = async (food) => {
+    if (!selectedListId || !onAddFood) return;
+    const ok = await onAddFood({
+      name: food.displayName,
+      quantity: food.unitDefault === 'kg' ? 0.5 : food.unitDefault === 'pezzi' ? 1 : 100,
+      unit: food.unitDefault,
+      category: food.category,
+      kcal100g: food.kcal100g,
+      protein100g: food.protein100g,
+      carbs100g: food.carbs100g,
+      fat100g: food.fat100g,
+      fiber100g: food.fiber100g,
+    });
+    if (ok) {
+      setCatalogQuery('');
+      setCatalogResults([]);
     }
   };
 
@@ -219,6 +253,82 @@ export default function ShoppingList({
           <p className="loading">Caricamento…</p>
         ) : (
           <>
+            {/* Ricerca catalogo - modo principale per aggiungere */}
+            <section className="section">
+              <div className="section-head-row">
+                <h2 className="section-head">Aggiungi dal catalogo</h2>
+              </div>
+              <div className="searchbar">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                  <circle cx="11" cy="11" r="7" />
+                  <path d="M20 20l-3.5-3.5" strokeLinecap="round" />
+                </svg>
+                <input
+                  type="search"
+                  value={catalogQuery}
+                  onChange={(e) => setCatalogQuery(e.target.value)}
+                  placeholder="Cerca nel catalogo (es. pane, latte, pomodoro…)…"
+                  aria-label="Cerca nel catalogo alimentare"
+                  autoComplete="off"
+                  enterKeyHint="search"
+                />
+                {catalogQuery && (
+                  <button
+                    type="button"
+                    className="searchbar-clear"
+                    onClick={() => setCatalogQuery('')}
+                    aria-label="Cancella ricerca"
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
+              {catalogQuery.trim().length >= 2 && catalogResults.length > 0 && (
+                <ul className="food-list">
+                  {catalogResults.map((food) => (
+                    <li key={food.fdcId} className="food">
+                      <div className="food-head">
+                        <div className="food-title">
+                          <span className="food-name">{food.displayName}</span>
+                          <span className="food-cat">{food.category}</span>
+                        </div>
+                        <span className="food-kcal">
+                          {food.kcal100g}
+                          <small>kcal/100g</small>
+                        </span>
+                      </div>
+                      <div className="food-macros">
+                        <span>P {food.protein100g}g</span>
+                        <span>C {food.carbs100g}g</span>
+                        <span>F {food.fat100g}g</span>
+                        {food.fiber100g > 0 && <span>Fib {food.fiber100g}g</span>}
+                      </div>
+                      <div className="food-add">
+                        <button
+                          type="button"
+                          className="btn btn-primary food-add-btn"
+                          onClick={() => handleCatalogAdd(food)}
+                          disabled={!selectedListId}
+                        >
+                          Aggiungi
+                        </button>
+                      </div>
+                      <div className="food-nutrition">
+                        <span className="food-nutrition-main">
+                          {food.kcal100g} kcal / 100g
+                        </span>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {catalogQuery.trim().length >= 2 && catalogResults.length === 0 && (
+                <p className="empty-body" style={{marginTop: '8px', textAlign: 'center'}}>
+                  Nessun risultato per “{catalogQuery}”. <a href="#" onClick={(e)=>{e.preventDefault(); setShowManual(true);}}>Aggiungi a mano</a>
+                </p>
+              )}
+            </section>
+
             {/* Prodotti già usati */}
             {savedProducts.length > 0 && (
               <section className="section">
@@ -257,126 +367,129 @@ export default function ShoppingList({
               </section>
             )}
 
-            {/* Aggiunta prodotto */}
+            {/* Aggiunta manuale - collassabile in fondo */}
             <section className="section">
-              <div className="section-head-row">
-                <h2 className="section-head">Aggiungi a mano</h2>
-                {onGoToCatalog && (
-                  <button type="button" className="link-btn" onClick={onGoToCatalog}>
-                    Sfoglia catalogo
-                  </button>
-                )}
-              </div>
-              <form className="group form-rows" onSubmit={handleAddItem}>
-                <div className="field-row field-row-stack">
-                  <label className="field-label" htmlFor="f-name">
-                    Prodotto
-                  </label>
-                  <div className="suggestions-wrap">
-                    <input
-                      id="f-name"
-                      type="text"
-                      value={product}
-                      onChange={(e) => {
-                        setProduct(e.target.value);
-                        setShowSuggestions(true);
-                      }}
-                      onFocus={() => setShowSuggestions(true)}
-                      onBlur={() => window.setTimeout(() => setShowSuggestions(false), 150)}
-                      placeholder="Uova, Latte, Pane…"
-                      autoComplete="off"
-                      required
-                    />
-                    {showSuggestions && suggestions.length > 0 && (
-                      <ul className="suggestions">
-                        {suggestions.map((sp) => (
-                          <li key={sp.id}>
-                            <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => handleQuickAdd(sp)}>
-                              <span>{sp.name}</span>
-                              <span className="suggestions-meta">
-                                {formatQuantity(sp.quantity, sp.unit)}
-                                {sp.category ? ` · ${sp.category}` : ''}
-                              </span>
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
+              <button
+                type="button"
+                className="section-head section-head-btn"
+                onClick={() => setShowManual((v) => !v)}
+                aria-expanded={showManual}
+              >
+                <span>Aggiungi a mano</span>
+                <span className="chevron">{showManual ? '▾' : '▸'}</span>
+              </button>
+              {showManual && (
+                <form className="group form-rows" onSubmit={handleAddItem}>
+                  <div className="field-row field-row-stack">
+                    <label className="field-label" htmlFor="f-name">
+                      Prodotto
+                    </label>
+                    <div className="suggestions-wrap">
+                      <input
+                        id="f-name"
+                        type="text"
+                        value={product}
+                        onChange={(e) => {
+                          setProduct(e.target.value);
+                          setShowSuggestions(true);
+                        }}
+                        onFocus={() => setShowSuggestions(true)}
+                        onBlur={() => window.setTimeout(() => setShowSuggestions(false), 150)}
+                        placeholder="Uova, Latte, Pane…"
+                        autoComplete="off"
+                        required
+                      />
+                      {showSuggestions && suggestions.length > 0 && (
+                        <ul className="suggestions">
+                          {suggestions.map((sp) => (
+                            <li key={sp.id}>
+                              <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => handleQuickAdd(sp)}>
+                                <span>{sp.name}</span>
+                                <span className="suggestions-meta">
+                                  {formatQuantity(sp.quantity, sp.unit)}
+                                  {sp.category ? ` · ${sp.category}` : ''}
+                                </span>
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
                   </div>
-                </div>
 
-                <div className="field-row">
-                  <label className="field-label" htmlFor="f-qty">
-                    Quantità
-                  </label>
-                  <input
-                    id="f-qty"
-                    className="field-input field-input-narrow"
-                    type="number"
-                    min="1"
-                    step="1"
-                    value={quantity}
-                    onChange={(e) => setQuantity(Number(e.target.value) || 1)}
-                  />
-                </div>
+                  <div className="field-row">
+                    <label className="field-label" htmlFor="f-qty">
+                      Quantità
+                    </label>
+                    <input
+                      id="f-qty"
+                      className="field-input field-input-narrow"
+                      type="number"
+                      min="1"
+                      step="1"
+                      value={quantity}
+                      onChange={(e) => setQuantity(Number(e.target.value) || 1)}
+                    />
+                  </div>
 
-                <div className="field-row">
-                  <label className="field-label" htmlFor="f-unit">
-                    Unità
-                  </label>
-                  <select
-                    id="f-unit"
-                    className="field-input"
-                    value={unit}
-                    onChange={(e) => setUnit(e.target.value)}
-                  >
-                    {UNIT_OPTIONS.map((option) => (
-                      <option key={option} value={option}>
-                        {option}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                  <div className="field-row">
+                    <label className="field-label" htmlFor="f-unit">
+                      Unità
+                    </label>
+                    <select
+                      id="f-unit"
+                      className="field-input"
+                      value={unit}
+                      onChange={(e) => setUnit(e.target.value)}
+                    >
+                      {UNIT_OPTIONS.map((option) => (
+                        <option key={option} value={option}>
+                          {option}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
-                <div className="field-row">
-                  <label className="field-label" htmlFor="f-cat">
-                    Categoria
-                  </label>
-                  <select
-                    id="f-cat"
-                    className="field-input"
-                    value={category}
-                    onChange={(e) => setCategory(e.target.value)}
-                  >
-                    <option value="">Nessuna</option>
-                    {CATEGORY_OPTIONS.map((option) => (
-                      <option key={option} value={option}>
-                        {option}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                  <div className="field-row">
+                    <label className="field-label" htmlFor="f-cat">
+                      Categoria
+                    </label>
+                    <select
+                      id="f-cat"
+                      className="field-input"
+                      value={category}
+                      onChange={(e) => setCategory(e.target.value)}
+                    >
+                      <option value="">Nessuna</option>
+                      {CATEGORY_OPTIONS.map((option) => (
+                        <option key={option} value={option}>
+                          {option}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
-                <div className="field-row">
-                  <label className="field-label" htmlFor="f-notes">
-                    Note
-                  </label>
-                  <input
-                    id="f-notes"
-                    className="field-input"
-                    type="text"
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    placeholder="Opzionale"
-                  />
-                </div>
+                  <div className="field-row">
+                    <label className="field-label" htmlFor="f-notes">
+                      Note
+                    </label>
+                    <input
+                      id="f-notes"
+                      className="field-input"
+                      type="text"
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
+                      placeholder="Opzionale"
+                    />
+                  </div>
 
-                <div className="form-actions">
-                  <button type="submit" className="btn btn-primary">
-                    Aggiungi alla lista
-                  </button>
-                </div>
-              </form>
+                  <div className="form-actions">
+                    <button type="submit" className="btn btn-primary">
+                      Aggiungi alla lista
+                    </button>
+                  </div>
+                </form>
+              )}
             </section>
 
             {/* Prodotti nella lista */}

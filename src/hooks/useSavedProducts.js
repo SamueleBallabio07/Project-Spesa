@@ -28,6 +28,11 @@ export function useSavedProducts(session) {
           unit: p[COLUMNS.SAVED_PRODUCTS.UNIT],
           category: p[COLUMNS.SAVED_PRODUCTS.CATEGORY],
           notes: p[COLUMNS.SAVED_PRODUCTS.NOTES],
+          kcal100g: p[COLUMNS.SAVED_PRODUCTS.KCAL100G] ?? null,
+          protein100g: p[COLUMNS.SAVED_PRODUCTS.PROTEIN100G] ?? null,
+          carbs100g: p[COLUMNS.SAVED_PRODUCTS.CARBS100G] ?? null,
+          fat100g: p[COLUMNS.SAVED_PRODUCTS.FAT100G] ?? null,
+          fiber100g: p[COLUMNS.SAVED_PRODUCTS.FIBER100G] ?? null,
         }))
       );
     }
@@ -39,7 +44,7 @@ export function useSavedProducts(session) {
   }, [fetchSavedProducts]);
 
   const saveProduct = useCallback(
-    async ({ name, quantity, unit, category, notes }) => {
+    async ({ name, quantity, unit, category, notes, kcal100g, protein100g, carbs100g, fat100g, fiber100g }) => {
       if (!supabase || !session) return false;
 
       const { error } = await supabase.from(TABLES.SAVED_PRODUCTS).insert([
@@ -50,6 +55,11 @@ export function useSavedProducts(session) {
           [COLUMNS.SAVED_PRODUCTS.UNIT]: unit,
           [COLUMNS.SAVED_PRODUCTS.CATEGORY]: category || null,
           [COLUMNS.SAVED_PRODUCTS.NOTES]: notes || null,
+          [COLUMNS.SAVED_PRODUCTS.KCAL100G]: kcal100g ?? null,
+          [COLUMNS.SAVED_PRODUCTS.PROTEIN100G]: protein100g ?? null,
+          [COLUMNS.SAVED_PRODUCTS.CARBS100G]: carbs100g ?? null,
+          [COLUMNS.SAVED_PRODUCTS.FAT100G]: fat100g ?? null,
+          [COLUMNS.SAVED_PRODUCTS.FIBER100G]: fiber100g ?? null,
         },
       ]);
 

@@ -38,6 +38,11 @@ export const COLUMNS = {
     NOTES: 'notes',
     CREATED_BY: 'created_by',
     CREATED_AT: 'created_at',
+    KCAL100G: 'kcal100g',
+    PROTEIN100G: 'protein100g',
+    CARBS100G: 'carbs100g',
+    FAT100G: 'fat100g',
+    FIBER100G: 'fiber100g',
   },
   LIST_MEMBERSHIPS: {
     ID: 'id',
@@ -72,6 +77,11 @@ export const COLUMNS = {
     CATEGORY: 'category',
     NOTES: 'notes',
     CREATED_AT: 'created_at',
+    KCAL100G: 'kcal100g',
+    PROTEIN100G: 'protein100g',
+    CARBS100G: 'carbs100g',
+    FAT100G: 'fat100g',
+    FIBER100G: 'fiber100g',
   },
 };
 
