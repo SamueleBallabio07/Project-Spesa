@@ -159,7 +159,35 @@ export function useShoppingList(session, ensureProfile) {
 
       const normalizedName = cleanName.toLowerCase();
 
-      // Cerca se esiste già un prodotto con lo stesso nome (case-insensitive) in QUALSIASI lista dell'utente
+      // 1. PRIMA controlla se esiste già nella STESSA lista → aumenta quantità
+      const { data: sameListItems } = await supabase
+        .from(TABLES.SHOPPING_ITEMS)
+        .select('*')
+        .eq(COLUMNS.SHOPPING_ITEMS.LIST_ID, listId);
+
+      const sameListItem = sameListItems?.find(
+        (item) => item[COLUMNS.SHOPPING_ITEMS.NAME].toLowerCase() === normalizedName
+      );
+
+      if (sameListItem) {
+        const newQuantity = Number(sameListItem[COLUMNS.SHOPPING_ITEMS.QUANTITY]) + (Number(quantity) || 1);
+
+        const { error: updateError } = await supabase
+          .from(TABLES.SHOPPING_ITEMS)
+          .update({ [COLUMNS.SHOPPING_ITEMS.QUANTITY]: newQuantity })
+          .eq(COLUMNS.SHOPPING_ITEMS.ID, sameListItem[COLUMNS.SHOPPING_ITEMS.ID]);
+
+        if (updateError) {
+          setError(updateError.message || "Errore durante l'aggiornamento del prodotto.");
+          return false;
+        }
+
+        setError('');
+        await refreshItems(listId);
+        return true;
+      }
+
+      // 2. POI cerca se esiste in ALTRI liste dell'utente → duplica copiando valori nutrizionali
       const { data: allUserLists } = await supabase
         .from(TABLES.SHOPPING_LISTS)
         .select(COLUMNS.SHOPPING_LISTS.ID)
@@ -174,7 +202,12 @@ export function useShoppingList(session, ensureProfile) {
           .select('*')
           .in(COLUMNS.SHOPPING_ITEMS.LIST_ID, userListIds);
 
-        existingProduct = existingItems?.find(
+        // Esclude la lista corrente (già controllata sopra)
+        const otherListItems = existingItems?.filter(
+          (item) => item[COLUMNS.SHOPPING_ITEMS.LIST_ID] !== listId
+        ) || [];
+
+        existingProduct = otherListItems.find(
           (item) => item[COLUMNS.SHOPPING_ITEMS.NAME].toLowerCase() === normalizedName
         ) || null;
       }
@@ -208,35 +241,7 @@ export function useShoppingList(session, ensureProfile) {
         return true;
       }
 
-      // Controlla se esiste già nella stessa lista (duplicato nella stessa lista)
-      const { data: sameListItems } = await supabase
-        .from(TABLES.SHOPPING_ITEMS)
-        .select('*')
-        .eq(COLUMNS.SHOPPING_ITEMS.LIST_ID, listId);
-
-      const sameListItem = sameListItems?.find(
-        (item) => item[COLUMNS.SHOPPING_ITEMS.NAME].toLowerCase() === normalizedName
-      );
-
-      if (sameListItem) {
-        const newQuantity = Number(sameListItem[COLUMNS.SHOPPING_ITEMS.QUANTITY]) + (Number(quantity) || 1);
-
-        const { error: updateError } = await supabase
-          .from(TABLES.SHOPPING_ITEMS)
-          .update({ [COLUMNS.SHOPPING_ITEMS.QUANTITY]: newQuantity })
-          .eq(COLUMNS.SHOPPING_ITEMS.ID, sameListItem[COLUMNS.SHOPPING_ITEMS.ID]);
-
-        if (updateError) {
-          setError(updateError.message || "Errore durante l'aggiornamento del prodotto.");
-          return false;
-        }
-
-        setError('');
-        await refreshItems(listId);
-        return true;
-      }
-
-      // Nuovo prodotto (non esiste in nessuna lista)
+      // 3. Nuovo prodotto (non esiste in nessuna lista)
       const { error: insertError } = await supabase.from(TABLES.SHOPPING_ITEMS).insert([{
         [COLUMNS.SHOPPING_ITEMS.LIST_ID]: listId,
         [COLUMNS.SHOPPING_ITEMS.NAME]: cleanName,
