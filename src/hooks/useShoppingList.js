@@ -159,23 +159,47 @@ export function useShoppingList(session, ensureProfile) {
 
       const normalizedName = cleanName.toLowerCase();
 
-      // 1. PRIMA controlla se esiste già nella STESSA lista → aumenta quantità
-      const { data: sameListItems } = await supabase
-        .from(TABLES.SHOPPING_ITEMS)
-        .select('*')
-        .eq(COLUMNS.SHOPPING_ITEMS.LIST_ID, listId);
+      // Query unica: cerca il prodotto nella stessa lista O in altre liste dell'utente
+      // Evita race condition tra i due controlli separati
+      const { data: allUserLists } = await supabase
+        .from(TABLES.SHOPPING_LISTS)
+        .select(COLUMNS.SHOPPING_LISTS.ID)
+        .eq(COLUMNS.SHOPPING_LISTS.OWNER_ID, userId);
 
-      const sameListItem = sameListItems?.find(
-        (item) => item[COLUMNS.SHOPPING_ITEMS.NAME].toLowerCase() === normalizedName
-      );
+      const userListIds = (allUserLists || []).map((l) => l[COLUMNS.SHOPPING_LISTS.ID]);
 
-      if (sameListItem) {
-        const newQuantity = Number(sameListItem[COLUMNS.SHOPPING_ITEMS.QUANTITY]) + (Number(quantity) || 1);
+      let existingProduct = null;
+      let sameListProduct = null;
+
+      if (userListIds.length > 0) {
+        const { data: existingItems } = await supabase
+          .from(TABLES.SHOPPING_ITEMS)
+          .select('*')
+          .in(COLUMNS.SHOPPING_ITEMS.LIST_ID, userListIds);
+
+        // Prima controlla stessa lista (priorità: aggiorna quantità)
+        sameListProduct = existingItems?.find(
+          (item) => item[COLUMNS.SHOPPING_ITEMS.LIST_ID] === listId &&
+                    item[COLUMNS.SHOPPING_ITEMS.NAME].toLowerCase() === normalizedName
+        ) || null;
+
+        // Poi controlla altre liste (duplica con valori nutrizionali)
+        if (!sameListProduct) {
+          existingProduct = existingItems?.find(
+            (item) => item[COLUMNS.SHOPPING_ITEMS.LIST_ID] !== listId &&
+                      item[COLUMNS.SHOPPING_ITEMS.NAME].toLowerCase() === normalizedName
+          ) || null;
+        }
+      }
+
+      // 1. Esiste nella stessa lista → aggiorna quantità
+      if (sameListProduct) {
+        const newQuantity = Number(sameListProduct[COLUMNS.SHOPPING_ITEMS.QUANTITY]) + (Number(quantity) || 1);
 
         const { error: updateError } = await supabase
           .from(TABLES.SHOPPING_ITEMS)
           .update({ [COLUMNS.SHOPPING_ITEMS.QUANTITY]: newQuantity })
-          .eq(COLUMNS.SHOPPING_ITEMS.ID, sameListItem[COLUMNS.SHOPPING_ITEMS.ID]);
+          .eq(COLUMNS.SHOPPING_ITEMS.ID, sameListProduct[COLUMNS.SHOPPING_ITEMS.ID]);
 
         if (updateError) {
           setError(updateError.message || "Errore durante l'aggiornamento del prodotto.");
@@ -187,33 +211,7 @@ export function useShoppingList(session, ensureProfile) {
         return true;
       }
 
-      // 2. POI cerca se esiste in ALTRI liste dell'utente → duplica copiando valori nutrizionali
-      const { data: allUserLists } = await supabase
-        .from(TABLES.SHOPPING_LISTS)
-        .select(COLUMNS.SHOPPING_LISTS.ID)
-        .eq(COLUMNS.SHOPPING_LISTS.OWNER_ID, userId);
-
-      const userListIds = (allUserLists || []).map((l) => l[COLUMNS.SHOPPING_LISTS.ID]);
-
-      let existingProduct = null;
-      if (userListIds.length > 0) {
-        const { data: existingItems } = await supabase
-          .from(TABLES.SHOPPING_ITEMS)
-          .select('*')
-          .in(COLUMNS.SHOPPING_ITEMS.LIST_ID, userListIds);
-
-        // Esclude la lista corrente (già controllata sopra)
-        const otherListItems = existingItems?.filter(
-          (item) => item[COLUMNS.SHOPPING_ITEMS.LIST_ID] !== listId
-        ) || [];
-
-        existingProduct = otherListItems.find(
-          (item) => item[COLUMNS.SHOPPING_ITEMS.NAME].toLowerCase() === normalizedName
-        ) || null;
-      }
-
-      // Se esiste già un prodotto con lo stesso nome in un'altra lista, duplica quel prodotto nella lista corrente
-      // Usa la quantità inserita nel form, ma copia i valori nutrizionali dal prodotto esistente
+      // 2. Esiste in altre liste → duplica copiando valori nutrizionali
       if (existingProduct) {
         const { error: insertError } = await supabase.from(TABLES.SHOPPING_ITEMS).insert([{
           [COLUMNS.SHOPPING_ITEMS.LIST_ID]: listId,
