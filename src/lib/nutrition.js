@@ -77,6 +77,14 @@ export function formatMacros(nutrition) {
   return parts.map(([label, value]) => `${label} ${round(value, 1).toLocaleString('it-IT')}`).join(' · ');
 }
 
-/** Grammi per unita' di conteggio con fallback sensato. */
-export const gramsFor = (food) =>
-  Number.isFinite(Number(food.gramsPerUnit)) ? Number(food.gramsPerUnit) : 100;
+/**
+ * Grammi per unita' di conteggio con fallback sensato.
+ * Number(null) e' 0 e 0 e un numero finito: senza il controllo esplicito su
+ * null il fallback diventerebbe "0 grammi per pezzi" invece di 100.
+ */
+export const gramsFor = (food) => {
+  const gpu = food?.gramsPerUnit;
+  if (gpu === null || gpu === undefined || gpu === '') return 100;
+  const n = Number(gpu);
+  return Number.isFinite(n) && n > 0 ? n : 100;
+};

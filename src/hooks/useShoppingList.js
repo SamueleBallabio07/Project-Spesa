@@ -234,8 +234,11 @@ export function useShoppingList(session, ensureProfile) {
         return false;
       }
 
-      // Salva automaticamente il prodotto per uso futuro
-      await supabase.from(TABLES.SAVED_PRODUCTS).upsert([{
+      // Salva automaticamente il prodotto per uso futuro. Il prodotto e' gia
+      // stato aggiunto alla lista, quindi un fallimento qui non deve bloccare
+      // l'aggiunta: si logga perche' altrimenti il salvataggio manca in
+      // silenzio (vincolo Unique assente, rete assente, RLS che filtrano).
+      const { error: saveError } = await supabase.from(TABLES.SAVED_PRODUCTS).upsert([{
         [COLUMNS.SAVED_PRODUCTS.USER_ID]: userId,
         [COLUMNS.SAVED_PRODUCTS.NAME]: cleanName,
         [COLUMNS.SAVED_PRODUCTS.QUANTITY]: Number(quantity) || 1,
@@ -243,6 +246,10 @@ export function useShoppingList(session, ensureProfile) {
         [COLUMNS.SAVED_PRODUCTS.CATEGORY]: category || null,
         [COLUMNS.SAVED_PRODUCTS.NOTES]: notes || null,
       }], { onConstraint: `${COLUMNS.SAVED_PRODUCTS.USER_ID},${COLUMNS.SAVED_PRODUCTS.NAME}` });
+
+      if (saveError) {
+        console.error('Salvataggio prodotto per uso futuro fallito:', saveError);
+      }
 
       setError('');
       await refreshItems(listId);
