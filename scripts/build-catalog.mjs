@@ -87,6 +87,7 @@ function candidates(query) {
 
 const rows = [];
 const report = [];
+const usedFdcIds = new Set();
 
 for (const [it, query] of Object.entries(queries)) {
   const category = cats[it] || 'Altro';
@@ -126,7 +127,21 @@ for (const [it, query] of Object.entries(queries)) {
     continue;
   }
 
-  const pick = hits[0].food;
+  // Sceglie il primo candidato il cui fdcId non e' gia' stato usato
+  let pick = null;
+  for (const hit of hits) {
+    if (!usedFdcIds.has(String(hit.food.id))) {
+      pick = hit.food;
+      usedFdcIds.add(String(pick.id));
+      break;
+    }
+  }
+
+  if (!pick) {
+    report.push({ it, state: 'NON RISOLTO', detail: `tutti i candidati hanno fdcId gia' usati per "${wanted}"` });
+    continue;
+  }
+
   const countable = pick.unit === 'pezzi';
 
   rows.push({
