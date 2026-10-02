@@ -1,6 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { nutritionFor, formatNutrition, formatMacros } from '../lib/nutrition';
 import { ThemeToggle } from './ThemeToggle';
+import { SearchBar } from './SearchBar';
+import { FoodCard } from './FoodCard';
+import { EmptyState } from './EmptyState';
+import { useStepper } from '../hooks/useStepper';
 
 const ALL = '__all__';
 const VISIBLE = 40;
@@ -17,7 +21,6 @@ export default function CatalogScreen({
 }) {
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState(ALL);
-  const [picked, setPicked] = useState({});
   const [added, setAdded] = useState({});
   const [showManual, setShowManual] = useState(false);
   const [manualForm, setManualForm] = useState({
@@ -32,6 +35,8 @@ export default function CatalogScreen({
     fiber100g: '',
   });
 
+  const { picked, stepFor, initialQty, pickQty, clearAll } = useStepper();
+
   // Il catalogo si scarica solo quando apri questa scheda.
   useEffect(() => {
     ensureLoaded();
@@ -42,23 +47,6 @@ export default function CatalogScreen({
     [search, query, category]
   );
   const results = matches.slice(0, VISIBLE);
-
-  const stepFor = (food) =>
-    food.unitDefault === 'pezzi' ? 1 : food.unitDefault === 'kg' ? 0.1 : 10;
-
-  const initialQty = (food) => {
-    if (picked[food.fdcId] !== undefined) return picked[food.fdcId];
-    if (food.unitDefault === 'kg') return 0.5;
-    if (food.unitDefault === 'pezzi') return 1;
-    return 100;
-  };
-
-  const pickQty = (food, next) => {
-    const step = stepFor(food);
-    const value = Math.max(step, Number(next) || step);
-    const rounded = Math.round(value * 100) / 100;
-    setPicked((prev) => ({ ...prev, [food.fdcId]: rounded }));
-  };
 
   const handleAdd = async (food) => {
     if (!selectedListId) return;
@@ -96,7 +84,6 @@ export default function CatalogScreen({
       quantity: Number(manualForm.quantity) || 1,
       unit: manualForm.unit,
       category: manualForm.category || null,
-      // Valori nutrizionali per 100g
       kcal100g: manualForm.kcal100g ? Number(manualForm.kcal100g) : null,
       protein100g: manualForm.protein100g ? Number(manualForm.protein100g) : null,
       carbs100g: manualForm.carbs100g ? Number(manualForm.carbs100g) : null,
@@ -137,31 +124,13 @@ export default function CatalogScreen({
         <span className="target-list-name">{selectedListName || 'Nessuna lista'}</span>
       </div>
 
-      <div className="searchbar">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-          <circle cx="11" cy="11" r="7" />
-          <path d="M20 20l-3.5-3.5" strokeLinecap="round" />
-        </svg>
-        <input
-          type="search"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Cerca un alimento…"
-          aria-label="Cerca nel catalogo"
-          autoComplete="off"
-          enterKeyHint="search"
-        />
-        {query && (
-          <button
-            type="button"
-            className="searchbar-clear"
-            onClick={() => setQuery('')}
-            aria-label="Cancella ricerca"
-          >
-            ×
-          </button>
-        )}
-      </div>
+      <SearchBar
+        value={query}
+        onChange={setQuery}
+        onClear={() => setQuery('')}
+        placeholder="Cerca un alimento…"
+        ariaLabel="Cerca nel catalogo"
+      />
 
       <div className="chips-scroll">
         <button
@@ -366,13 +335,11 @@ export default function CatalogScreen({
           </p>
 
           {matches.length === 0 ? (
-            <div className="empty">
-              <p className="empty-title">Nessun risultato</p>
-              <p className="empty-body">
-                {query ? <>Non c’è “{query}” nel catalogo.</> : 'Catalogo vuoto per questa categoria.'}
-              </p>
-              <p className="empty-hint">Puoi comunque aggiungerlo a mano dalla scheda Liste.</p>
-            </div>
+            <EmptyState
+              title="Nessun risultato"
+              body={query ? <>Non c'è “{query}” nel catalogo.</> : 'Catalogo vuoto per questa categoria.'}
+              hint="Puoi comunque aggiungerlo a mano dalla scheda Liste."
+            />
           ) : (
             <>
               <ul className="food-list">
@@ -383,67 +350,18 @@ export default function CatalogScreen({
                   const step = stepFor(food);
 
                   return (
-                    <li key={food.fdcId} className="food">
-                      <div className="food-head">
-                        <div className="food-title">
-                          <span className="food-name">{food.displayName}</span>
-                          <span className="food-cat">{food.category}</span>
-                        </div>
-                        <span className="food-kcal">
-                          {food.kcal100g}
-                          <small>kcal/100g</small>
-                        </span>
-                      </div>
-
-                      <div className="food-macros">
-                        <span>P {food.protein100g}g</span>
-                        <span>C {food.carbs100g}g</span>
-                        <span>F {food.fat100g}g</span>
-                        {food.fiber100g > 0 && <span>Fib {food.fiber100g}g</span>}
-                      </div>
-
-                      <div className="food-add">
-                        <div className="stepper">
-                          <button
-                            type="button"
-                            onClick={() => pickQty(food, quantity - step)}
-                            aria-label={`Diminua quantità di ${food.displayName}`}
-                          >
-                            −
-                          </button>
-                          <span className="stepper-value">
-                            {quantity}
-                            <small>{food.unitDefault}</small>
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => pickQty(food, quantity + step)}
-                            aria-label={`Aumenta quantità di ${food.displayName}`}
-                          >
-                            +
-                          </button>
-                        </div>
-
-                        <button
-                          type="button"
-                          className={`btn btn-primary food-add-btn ${justAdded ? 'is-added' : ''}`}
-                          onClick={() => handleAdd(food)}
-                          disabled={!selectedListId}
-                        >
-                          {justAdded ? 'Aggiunto ✓' : 'Aggiungi'}
-                        </button>
-                      </div>
-
-                      <div className="food-nutrition">
-                        <span className="food-nutrition-main">
-                          {formatNutrition(nutrition, food.unitDefault)}
-                          {food.sizeLabel && food.unitDefault === 'pezzi' && (
-                            <small className="food-size">1 {food.sizeLabel}</small>
-                          )}
-                        </span>
-                        <span className="food-nutrition-macros">{formatMacros(nutrition)}</span>
-                      </div>
-                    </li>
+                    <FoodCard
+                      key={food.fdcId}
+                      food={food}
+                      quantity={quantity}
+                      unitDefault={food.unitDefault}
+                      step={step}
+                      onQuantityChange={pickQty}
+                      onAdd={handleAdd}
+                      disabled={!selectedListId}
+                      justAdded={justAdded}
+                      variant="catalog"
+                    />
                   );
                 })}
               </ul>

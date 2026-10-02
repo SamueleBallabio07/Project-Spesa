@@ -1,5 +1,9 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { ThemeToggle } from './ThemeToggle';
+import { SearchBar } from './SearchBar';
+import { FoodCard } from './FoodCard';
+import { EmptyState } from './EmptyState';
+import { useStepper } from '../hooks/useStepper';
 
 const UNIT_LABELS = {
   pezzo: 'pezzo',
@@ -17,17 +21,14 @@ function formatQuantity(value, unit) {
 }
 
 export default function ShoppingList({
-  session,
   items,
   lists,
   selectedListId,
   loadingItems,
   error,
   summary,
-  onAddItem,
   onToggleItem,
   onRemoveItem,
-  onUpdateItem,
   onCreateList,
   onSwitchList,
   onDeleteList,
@@ -40,7 +41,8 @@ export default function ShoppingList({
   const [confirmDeleteList, setConfirmDeleteList] = useState(null);
   const [catalogQuery, setCatalogQuery] = useState('');
   const [catalogResults, setCatalogResults] = useState([]);
-  const [picked, setPicked] = useState({});
+
+  const { picked, stepFor, initialQty, pickQty, clearAll } = useStepper();
 
   // Ricerca catalogo inline
   useEffect(() => {
@@ -49,25 +51,9 @@ export default function ShoppingList({
       setCatalogResults(results.slice(0, 10));
     } else {
       setCatalogResults([]);
+      clearAll();
     }
-  }, [catalogQuery, catalogSearch]);
-
-  const stepFor = (food) =>
-    food.unitDefault === 'pezzi' ? 1 : food.unitDefault === 'kg' ? 0.1 : 10;
-
-  const initialQty = (food) => {
-    if (picked[food.fdcId] !== undefined) return picked[food.fdcId];
-    if (food.unitDefault === 'kg') return 0.5;
-    if (food.unitDefault === 'pezzi') return 1;
-    return 100;
-  };
-
-  const pickQty = (food, next) => {
-    const step = stepFor(food);
-    const value = Math.max(step, Number(next) || step);
-    const rounded = Math.round(value * 100) / 100;
-    setPicked((prev) => ({ ...prev, [food.fdcId]: rounded }));
-  };
+  }, [catalogQuery, catalogSearch, catalogSearch, clearAll]);
 
   const handleCatalogAdd = async (food) => {
     if (!selectedListId || !onAddFood) return;
@@ -86,6 +72,7 @@ export default function ShoppingList({
     if (ok) {
       setCatalogQuery('');
       setCatalogResults([]);
+      clearAll();
     }
   };
 
@@ -199,94 +186,35 @@ export default function ShoppingList({
               <div className="section-head-row">
                 <h2 className="section-head">Aggiungi dal catalogo</h2>
               </div>
-              <div className="searchbar">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                  <circle cx="11" cy="11" r="7" />
-                  <path d="M20 20l-3.5-3.5" strokeLinecap="round" />
-                </svg>
-                <input
-                  type="search"
-                  value={catalogQuery}
-                  onChange={(e) => setCatalogQuery(e.target.value)}
-                  placeholder="Cerca nel catalogo (es. pane, latte, pomodoro…)…"
-                  aria-label="Cerca nel catalogo alimentare"
-                  autoComplete="off"
-                  enterKeyHint="search"
-                />
-                {catalogQuery && (
-                  <button
-                    type="button"
-                    className="searchbar-clear"
-                    onClick={() => setCatalogQuery('')}
-                    aria-label="Cancella ricerca"
-                  >
-                    ×
-                  </button>
-                )}
-              </div>
+              <SearchBar
+                value={catalogQuery}
+                onChange={setCatalogQuery}
+                onClear={() => { setCatalogQuery(''); clearAll(); }}
+                placeholder="Cerca nel catalogo (es. pane, latte, pomodoro…)…"
+                ariaLabel="Cerca nel catalogo alimentare"
+              />
               {catalogQuery.trim().length >= 2 && catalogResults.length > 0 && (
                 <ul className="food-list">
                   {catalogResults.map((food) => (
-                    <li key={food.fdcId} className="food">
-                      <div className="food-head">
-                        <div className="food-title">
-                          <span className="food-name">{food.displayName}</span>
-                          <span className="food-cat">{food.category}</span>
-                        </div>
-                        <span className="food-kcal">
-                          {food.kcal100g}
-                          <small>kcal/100g</small>
-                        </span>
-                      </div>
-                      <div className="food-macros">
-                        <span>P {food.protein100g}g</span>
-                        <span>C {food.carbs100g}g</span>
-                        <span>F {food.fat100g}g</span>
-                        {food.fiber100g > 0 && <span>Fib {food.fiber100g}g</span>}
-                      </div>
-                      <div className="food-add">
-                        <div className="stepper">
-                          <button
-                            type="button"
-                            onClick={() => pickQty(food, initialQty(food) - stepFor(food))}
-                            aria-label={`Diminuisci quantità di ${food.displayName}`}
-                          >
-                            −
-                          </button>
-                          <span className="stepper-value">
-                            {initialQty(food)}
-                            <small>{food.unitDefault}</small>
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => pickQty(food, initialQty(food) + stepFor(food))}
-                            aria-label={`Aumenta quantità di ${food.displayName}`}
-                          >
-                            +
-                          </button>
-                        </div>
-                        <button
-                          type="button"
-                          className="btn btn-primary food-add-btn"
-                          onClick={() => handleCatalogAdd(food)}
-                          disabled={!selectedListId}
-                        >
-                          Aggiungi
-                        </button>
-                      </div>
-                      <div className="food-nutrition">
-                        <span className="food-nutrition-main">
-                          {food.kcal100g} kcal / 100g
-                        </span>
-                      </div>
-                    </li>
+                    <FoodCard
+                      key={food.fdcId}
+                      food={food}
+                      quantity={initialQty(food)}
+                      unitDefault={food.unitDefault}
+                      step={stepFor(food)}
+                      onQuantityChange={pickQty}
+                      onAdd={handleCatalogAdd}
+                      disabled={!selectedListId}
+                      variant="search"
+                    />
                   ))}
                 </ul>
               )}
               {catalogQuery.trim().length >= 2 && catalogResults.length === 0 && (
-                <p className="empty-body" style={{marginTop: '8px', textAlign: 'center'}}>
-                  Nessun risultato per “{catalogQuery}”.
-                </p>
+                <EmptyState
+                  title="Nessun risultato"
+                  body={<>Non c'è “{catalogQuery}” nel catalogo.</>}
+                />
               )}
             </section>
 
@@ -294,7 +222,10 @@ export default function ShoppingList({
             <section className="section">
               <h2 className="section-head">Prodotti</h2>
               {items.length === 0 ? (
-                <p className="empty">Non c'è ancora niente in questa lista.</p>
+                <EmptyState
+                  title="Lista vuota"
+                  body="Non c'è ancora niente in questa lista."
+                />
               ) : (
                 <ul className="group">
                   {items.map((item) => (
