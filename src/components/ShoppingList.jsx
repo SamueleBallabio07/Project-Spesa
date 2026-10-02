@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { UNIT_OPTIONS, CATEGORY_OPTIONS } from '../lib/schema';
+import { ThemeToggle } from './ThemeToggle';
 
 const UNIT_LABELS = {
   pezzo: 'pezzo',
@@ -189,9 +190,12 @@ export default function ShoppingList({
             <p className="topbar-sub">{selectedList ? `${lists.length} liste` : 'Lista della spesa'}</p>
             <h1>{selectedList?.name || 'Spesa'}</h1>
           </div>
-          <button type="button" className="btn btn-ghost" onClick={onSignOut}>
-            Esci
-          </button>
+          <div className="topbar-actions">
+            <ThemeToggle />
+            <button type="button" className="btn btn-ghost" onClick={onSignOut}>
+              Esci
+            </button>
+          </div>
         </header>
 
         <section className="summary" aria-label="Riepilogo">

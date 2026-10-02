@@ -4,12 +4,14 @@ import { useShoppingList } from './hooks/useShoppingList';
 import { useSavedProducts } from './hooks/useSavedProducts';
 import { useFoodCatalog } from './hooks/useFoodCatalog';
 import { useOfflineSync } from './hooks/useOfflineSync';
+import { useTheme } from './hooks/useTheme';
 import Auth from './components/Auth';
 import ShoppingList from './components/ShoppingList';
 import CatalogScreen from './components/CatalogScreen';
 import TabBar from './components/TabBar';
 
 export default function App() {
+  useTheme();
   const { session, loading, hasSupabaseConfig, signIn, signUp, signOut, ensureProfile } = useAuth();
   const list = useShoppingList(session, ensureProfile);
   const saved = useSavedProducts(session);

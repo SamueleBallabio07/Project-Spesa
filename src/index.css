@@ -67,6 +67,38 @@
   -webkit-text-size-adjust: 100%;
 }
 
+/* ============ DARK MODE ============
+   Stessi token, valori adattati per sfondo scuro.
+   Attivato via [data-theme="dark"] su <html>.
+   =================================== */
+[data-theme="dark"] {
+  /* superfici scure: caffè molto scuro, non nero puro */
+  --bg: #1d1a16;           /* caffè notte */
+  --card: #26221c;         /* caffè scuro */
+  --sidebar-bg: #1f1c18;   /* sidebar un tono più chiaro */
+  --separator: rgba(246, 241, 232, 0.12);
+  --shadow-1: 0 1px 3px rgba(0, 0, 0, 0.25), 0 1px 2px rgba(0, 0, 0, 0.20);
+  --shadow-2: 0 4px 12px rgba(0, 0, 0, 0.30), 0 2px 4px rgba(0, 0, 0, 0.20);
+  --shadow-3: 0 12px 28px rgba(0, 0, 0, 0.35), 0 4px 8px rgba(0, 0, 0, 0.25);
+
+  /* testo: pergamena/avorio */
+  --text: #f6f1e8;         /* pergamena - primario */
+  --text-2: rgba(246, 241, 232, 0.70);  /* secondario */
+  --text-3: rgba(246, 241, 232, 0.40);  /* terziario / placeholder */
+  --text-inverse: #1d1a16; /* su sfondi chiari (es. badge oliva) */
+
+  /* accenti: più brillanti per contrasto su scuro */
+  --olive: #7db85a;        /* oliva chiaro */
+  --olive-dark: #6aa04a;   /* oliva medio */
+  --olive-light: rgba(125, 184, 90, 0.18);
+  --amber: #e8b44a;        /* ambra chiaro */
+  --amber-light: rgba(232, 180, 74, 0.18);
+  --rust: #d96b52;         /* ruggine chiaro */
+  --rust-light: rgba(217, 107, 82, 0.18);
+
+  color-scheme: dark;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -641,6 +673,13 @@ button {
   min-width: 0;
 }
 
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
 /* Sottotitolo del titolo: contiene dati ("3 liste", "Catalogo USDA"), non
    intestazioni di sezione. Restava in maiuscoletto tracciato come le
    intestazioni e sembrava un'etichetta anche quando era un conteggio. */
@@ -1070,6 +1109,15 @@ select.field-input {
 .btn-ghost {
   background: var(--separator);
   color: var(--text);
+}
+
+.theme-toggle {
+  min-width: var(--tap);
+  padding: 8px;
+}
+
+.theme-toggle svg {
+  display: block;
 }
 
 /* ---------------- stati ---------------- */

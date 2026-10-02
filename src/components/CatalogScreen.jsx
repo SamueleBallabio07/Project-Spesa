@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { nutritionFor, formatNutrition, formatMacros } from '../lib/nutrition';
+import { ThemeToggle } from './ThemeToggle';
 
 const ALL = '__all__';
 const VISIBLE = 40;
@@ -75,6 +76,9 @@ export default function CatalogScreen({
         <div className="topbar-text">
           <p className="topbar-sub">Catalogo USDA</p>
           <h1>Prodotti</h1>
+        </div>
+        <div className="topbar-actions">
+          <ThemeToggle />
         </div>
       </header>
 
