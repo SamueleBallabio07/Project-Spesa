@@ -40,6 +40,7 @@ export default function ShoppingList({
   const [confirmDeleteList, setConfirmDeleteList] = useState(null);
   const [catalogQuery, setCatalogQuery] = useState('');
   const [catalogResults, setCatalogResults] = useState([]);
+  const [picked, setPicked] = useState({});
 
   // Ricerca catalogo inline
   useEffect(() => {
@@ -51,11 +52,29 @@ export default function ShoppingList({
     }
   }, [catalogQuery, catalogSearch]);
 
+  const stepFor = (food) =>
+    food.unitDefault === 'pezzi' ? 1 : food.unitDefault === 'kg' ? 0.1 : 10;
+
+  const initialQty = (food) => {
+    if (picked[food.fdcId] !== undefined) return picked[food.fdcId];
+    if (food.unitDefault === 'kg') return 0.5;
+    if (food.unitDefault === 'pezzi') return 1;
+    return 100;
+  };
+
+  const pickQty = (food, next) => {
+    const step = stepFor(food);
+    const value = Math.max(step, Number(next) || step);
+    const rounded = Math.round(value * 100) / 100;
+    setPicked((prev) => ({ ...prev, [food.fdcId]: rounded }));
+  };
+
   const handleCatalogAdd = async (food) => {
     if (!selectedListId || !onAddFood) return;
+    const quantity = initialQty(food);
     const ok = await onAddFood({
       name: food.displayName,
-      quantity: food.unitDefault === 'kg' ? 0.5 : food.unitDefault === 'pezzi' ? 1 : 100,
+      quantity,
       unit: food.unitDefault,
       category: food.category,
       kcal100g: food.kcal100g,
@@ -226,6 +245,26 @@ export default function ShoppingList({
                         {food.fiber100g > 0 && <span>Fib {food.fiber100g}g</span>}
                       </div>
                       <div className="food-add">
+                        <div className="stepper">
+                          <button
+                            type="button"
+                            onClick={() => pickQty(food, initialQty(food) - stepFor(food))}
+                            aria-label={`Diminuisci quantità di ${food.displayName}`}
+                          >
+                            −
+                          </button>
+                          <span className="stepper-value">
+                            {initialQty(food)}
+                            <small>{food.unitDefault}</small>
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => pickQty(food, initialQty(food) + stepFor(food))}
+                            aria-label={`Aumenta quantità di ${food.displayName}`}
+                          >
+                            +
+                          </button>
+                        </div>
                         <button
                           type="button"
                           className="btn btn-primary food-add-btn"
