@@ -92,7 +92,7 @@ export default function Auth({ hasSupabaseConfig, onSignIn, onSignUp }) {
           </label>
 
           {error ? <p className="alert">{error}</p> : null}
-          {notice ? <p className="alert" style={{ background: 'rgba(52,199,89,.14)', color: '#1b7f37' }}>{notice}</p> : null}
+          {notice ? <p className="notice">{notice}</p> : null}
 
           <button type="submit" className="btn btn-primary" disabled={loading}>
             {loading ? 'Attendi…' : mode === 'signin' ? 'Accedi' : 'Registrati'}

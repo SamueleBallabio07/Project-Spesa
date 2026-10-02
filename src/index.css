@@ -92,6 +92,8 @@ button {
   margin: 0 auto;
 }
 
+/* Intestazione di colonna: maiuscoletto tracciato, come nei grouped table
+   di iOS. Resta perche' e' un titolo di sezione, non un'etichetta. */
 .sidebar-title {
   margin: 0;
   font-size: 13px;
@@ -597,12 +599,12 @@ button {
   padding: 12px 0 4px;
 }
 
+/* Sottotitolo del titolo: contiene dati ("3 liste", "Catalogo USDA"), non
+   intestazioni di sezione. Restava in maiuscoletto tracciato come le
+   intestazioni e sembrava un'etichetta anche quando era un conteggio. */
 .topbar-sub {
   margin: 0 0 2px;
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  font-size: 14px;
   color: var(--label-2);
 }
 
@@ -650,6 +652,9 @@ button {
   gap: 10px;
 }
 
+/* Titoli di sezione: restano in maiuscoletto tracciato, e' la convenzione
+   dei grouped table iOS e qui codifica la gerarchia. Il testo dentro, no:
+   le intestazioni sono 13px/600/tracciate, il contenuto no. */
 .section-head {
   margin: 0 0 0 4px;
   font-size: 13px;
@@ -858,8 +863,42 @@ select.field-input {
   color: var(--label-2);
 }
 
+/* Azione su riga: icona, non etichetta. Su una lista di trenta righe due
+   bottoni di testo diventano sessanta parole e schiacciano il nome del
+   prodotto. Il nome accessibile resta in aria-label, quindi il bersaglio
+   per uno screen reader non perde nulla. */
+.row-action {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--tap);
+  height: var(--tap);
+  border-radius: 50%;
+  color: var(--label-2);
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.row-action svg {
+  width: 19px;
+  height: 19px;
+}
+.row-action:active {
+  background: rgba(120, 120, 128, 0.14);
+}
+
+/* Elimina: rosso come tutto il resto delle azioni distruttive. */
+.row-action.is-danger {
+  color: var(--red);
+}
+.row-action.is-danger:active {
+  background: rgba(255, 59, 48, 0.12);
+}
+
+/* Rimuovi dai frequenti: era 36pt, sotto il minimo di 44. Stessa correzione
+   perche' e' lo stesso tipo di controllo, quindi nessuna delle due righe
+   resta indietro. */
 .row-del {
-  min-height: 36px;
+  min-height: var(--tap);
   padding: 6px 10px;
   border-radius: 8px;
   font-size: 14px;
@@ -989,24 +1028,6 @@ select.field-input {
   color: var(--label);
 }
 
-.btn-quiet {
-  min-height: 36px;
-  padding: 6px 12px;
-  font-size: 15px;
-  font-weight: 500;
-  color: var(--blue);
-  background: rgba(0, 122, 255, 0.1);
-}
-
-.btn-danger {
-  min-height: 36px;
-  padding: 6px 12px;
-  font-size: 15px;
-  font-weight: 500;
-  color: var(--red);
-  background: rgba(255, 59, 48, 0.1);
-}
-
 /* ---------------- stati ---------------- */
 .empty,
 .loading {
@@ -1020,12 +1041,47 @@ select.field-input {
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
+/* Stato vuoto del catalogo: tre paragrafi dentro lo stesso riquadro.
+   Senza questi stili prendevano il margine default del browser e si
+   spaziavano a caso. Titolo, cosa manca, e poi la via d'uscita: lo
+   schermo vuoto deve dire cosa fare, non solo che non c'e' niente. */
+.empty-title {
+  margin: 0 0 6px;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--label);
+}
+.empty-body {
+  margin: 0;
+  font-size: 16px;
+}
+.empty-hint {
+  margin: 14px 0 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--separator);
+  font-size: 15px;
+}
+
 .alert {
   margin: 0;
   padding: 12px 16px;
   border-radius: var(--radius-btn);
   background: rgba(255, 59, 48, 0.12);
   color: #c62828;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+/* Stesso riquadro di .alert ma per un esito riuscito. Prima il messaggio di
+   registrazione riuscita riusava .alert e ne riscriveva colori e fondo in
+   stile inline: un riuso di successo come errore, che si rompe appena
+   qualcuno tocca .alert. Classe propria, zero inline. */
+.notice {
+  margin: 0;
+  padding: 12px 16px;
+  border-radius: var(--radius-btn);
+  background: rgba(52, 199, 89, 0.14);
+  color: #1b7f37;
   font-size: 15px;
   font-weight: 500;
 }
@@ -1101,11 +1157,12 @@ select.field-input {
   flex-direction: column;
   gap: 6px;
 }
+/* Etichetta di campo: nome del dato, non titolo di sezione. "EMAIL" con le
+   lettere spaziate e' la stessa aria di traccia di .section-head senza
+   aggiungere nulla. Frase normale, come le label di iOS. */
 .auth-form .field span {
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
+  font-size: 15px;
+  font-weight: 500;
   color: var(--label-2);
 }
 .auth-form input {
@@ -1147,12 +1204,44 @@ select.field-input {
     --gap: 28px;
   }
 
+  /* Su desktop la barra delle schede non sparisce: e' l'unico modo per
+     passare fra Liste e Prodotti, e toglierla lascerebbe meta' app
+     irraggiungibile. Cambia solo forma e posto: order -1 la porta in cima,
+     in flusso e allineata a destra, e da barra a pie' di pagina diventa
+     header di sezione. Stessa azione, forma adatta alla piattaforma. */
   .tabbar {
-    flex: 0 0 auto;
+    /* static, non sticky: in alto non ha piu' nulla da seguire */
+    position: static;
+    order: -1;
+    justify-content: flex-end;
+    gap: 2px;
+    padding: 10px 32px 0;
+    background: var(--bg);
+    border-top: 0;
   }
 
   .tab {
-    min-height: 52px;
+    flex: 0 0 auto;
+    flex-direction: row;
+    gap: 7px;
+    min-height: 34px;
+    padding: 6px 14px;
+    border-radius: 8px;
+  }
+
+  .tab.is-active {
+    background: var(--card);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  }
+
+  .tab-icon {
+    width: 18px;
+    height: 18px;
+  }
+
+  .tab-label {
+    font-size: 14px;
+    font-weight: 500;
   }
 
   /* su desktop la lista delle liste diventa una colonna a sinistra */

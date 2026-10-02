@@ -471,15 +471,41 @@ export default function ShoppingList({
                           </div>
 
                           <div className="item-actions">
-                            <button type="button" className="btn btn-quiet" onClick={() => startEdit(item)}>
-                              Modifica
+                            <button
+                              type="button"
+                              className="row-action"
+                              onClick={() => startEdit(item)}
+                              aria-label={`Modifica ${item.name}`}
+                            >
+                              <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="1.7"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                aria-hidden="true"
+                              >
+                                <path d="M4 20h4L19 9a2.1 2.1 0 0 0-3-3L5 17v3zM14.5 6.5l3 3" />
+                              </svg>
                             </button>
                             <button
                               type="button"
-                              className="btn btn-danger"
+                              className="row-action is-danger"
                               onClick={() => onRemoveItem(item.id)}
+                              aria-label={`Elimina ${item.name}`}
                             >
-                              Elimina
+                              <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="1.7"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                aria-hidden="true"
+                              >
+                                <path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" />
+                              </svg>
                             </button>
                           </div>
                         </div>
