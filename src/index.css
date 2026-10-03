@@ -1093,6 +1093,10 @@ select.field-input {
   transition: background 0.15s ease, color 0.15s ease, transform 0.12s ease;
   pointer-events: auto;
   z-index: 10;
+  cursor: pointer;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .item-quantity .stepper button:active {
