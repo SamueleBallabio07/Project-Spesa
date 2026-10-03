@@ -4,7 +4,7 @@ import { ThemeToggle } from './ThemeToggle';
 import { SearchBar } from './SearchBar';
 import { EmptyState } from './EmptyState';
 import { useStepper } from '../hooks/useStepper';
-import { VirtualizedFoodList } from './VirtualizedFoodList';
+import { FoodCard } from './FoodCard';
 
 const ALL = '__all__';
 const VISIBLE = 40;
@@ -342,17 +342,29 @@ export default function CatalogScreen({
             />
           ) : (
             <>
-              <VirtualizedFoodList
-                foods={results}
-                onAdd={handleAdd}
-                onQuantityChange={pickQty}
-                selectedListId={selectedListId}
-                added={added}
-                picked={picked}
-                initialQty={initialQty}
-                stepFor={stepFor}
-                variant="catalog"
-              />
+              <ul className="food-list">
+                {results.map((food) => {
+                  const quantity = initialQty(food);
+                  const nutrition = nutritionFor(food, quantity, food.unitDefault);
+                  const justAdded = Boolean(added[food.fdcId]);
+                  const step = stepFor(food);
+
+                  return (
+                    <FoodCard
+                      key={food.fdcId}
+                      food={food}
+                      quantity={quantity}
+                      unitDefault={food.unitDefault}
+                      step={step}
+                      onQuantityChange={pickQty}
+                      onAdd={handleAdd}
+                      disabled={!selectedListId}
+                      justAdded={justAdded}
+                      variant="catalog"
+                    />
+                  );
+                })}
+              </ul>
 
               {matches.length > results.length && (
                 <p className="results-more">
