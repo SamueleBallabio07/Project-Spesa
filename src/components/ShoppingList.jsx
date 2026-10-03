@@ -57,7 +57,7 @@ export default function ShoppingList({
 
   const handleCatalogAdd = async (food) => {
     if (!selectedListId || !onAddFood) return;
-    const quantity = initialQty(food);
+    const quantity = picked[food.fdcId] ?? initialQty(food);
     const ok = await onAddFood({
       name: food.displayName,
       quantity,
