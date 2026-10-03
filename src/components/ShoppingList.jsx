@@ -205,7 +205,7 @@ export default function ShoppingList({
                       onQuantityChange={pickQty}
                       onAdd={handleCatalogAdd}
                       disabled={!selectedListId}
-                      variant="search"
+                      variant="catalog"
                     />
                   ))}
                 </ul>
