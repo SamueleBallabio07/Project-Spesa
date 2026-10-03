@@ -2,9 +2,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { nutritionFor, formatNutrition, formatMacros } from '../lib/nutrition';
 import { ThemeToggle } from './ThemeToggle';
 import { SearchBar } from './SearchBar';
-import { FoodCard } from './FoodCard';
 import { EmptyState } from './EmptyState';
 import { useStepper } from '../hooks/useStepper';
+import { VirtualizedFoodList } from './VirtualizedFoodList';
 
 const ALL = '__all__';
 const VISIBLE = 40;
@@ -342,29 +342,17 @@ export default function CatalogScreen({
             />
           ) : (
             <>
-              <ul className="food-list">
-                {results.map((food) => {
-                  const quantity = initialQty(food);
-                  const nutrition = nutritionFor(food, quantity, food.unitDefault);
-                  const justAdded = Boolean(added[food.fdcId]);
-                  const step = stepFor(food);
-
-                  return (
-                    <FoodCard
-                      key={food.fdcId}
-                      food={food}
-                      quantity={quantity}
-                      unitDefault={food.unitDefault}
-                      step={step}
-                      onQuantityChange={pickQty}
-                      onAdd={handleAdd}
-                      disabled={!selectedListId}
-                      justAdded={justAdded}
-                      variant="catalog"
-                    />
-                  );
-                })}
-              </ul>
+              <VirtualizedFoodList
+                foods={results}
+                onAdd={handleAdd}
+                onQuantityChange={pickQty}
+                selectedListId={selectedListId}
+                added={added}
+                picked={picked}
+                initialQty={initialQty}
+                stepFor={stepFor}
+                variant="catalog"
+              />
 
               {matches.length > results.length && (
                 <p className="results-more">

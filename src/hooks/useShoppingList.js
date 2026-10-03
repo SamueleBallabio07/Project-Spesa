@@ -14,6 +14,11 @@ const normalizeItems = (rows = []) =>
     notes: item[COLUMNS.SHOPPING_ITEMS.NOTES],
     createdBy: item[COLUMNS.SHOPPING_ITEMS.CREATED_BY],
     createdAt: item[COLUMNS.SHOPPING_ITEMS.CREATED_AT],
+    kcal100g: item[COLUMNS.SHOPPING_ITEMS.KCAL100G] ?? null,
+    protein100g: item[COLUMNS.SHOPPING_ITEMS.PROTEIN100G] ?? null,
+    carbs100g: item[COLUMNS.SHOPPING_ITEMS.CARBS100G] ?? null,
+    fat100g: item[COLUMNS.SHOPPING_ITEMS.FAT100G] ?? null,
+    fiber100g: item[COLUMNS.SHOPPING_ITEMS.FIBER100G] ?? null,
   }));
 
 const normalizeLists = (rows = []) =>
@@ -21,9 +26,12 @@ const normalizeLists = (rows = []) =>
     id: list[COLUMNS.SHOPPING_LISTS.ID],
     name: list[COLUMNS.SHOPPING_LISTS.NAME],
     description: list[COLUMNS.SHOPPING_LISTS.DESCRIPTION],
-    ownerId: list[COLUMNS.SHOPPING_LISTS.OWNER_ID],
+    ownerId: list[COLUMNS.SHOPPING_LISTS.Owner_ID],
     createdAt: list[COLUMNS.SHOPPING_LISTS.CREATED_AT],
   }));
+
+// Genera ID temporaneo per optimistic updates
+const generateTempId = () => `temp-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 
 export function useShoppingList(session, ensureProfile) {
   const [items, setItems] = useState([]);
@@ -159,132 +167,85 @@ export function useShoppingList(session, ensureProfile) {
 
       const normalizedName = cleanName.toLowerCase();
 
-      // Query unica: cerca il prodotto nella stessa lista O in altre liste dell'utente
-      // Evita race condition tra i due controlli separati
-      const { data: allUserLists } = await supabase
-        .from(TABLES.SHOPPING_LISTS)
-        .select(COLUMNS.SHOPPING_LISTS.ID)
-        .eq(COLUMNS.SHOPPING_LISTS.OWNER_ID, userId);
+      // OPTIMISTIC UPDATE: aggiungi subito alla UI
+      const tempId = generateTempId();
+      const optimisticItem = {
+        id: tempId,
+        listId,
+        name: cleanName,
+        quantity: Number(quantity) || 1,
+        unit: unit || 'pezzi',
+        bought: false,
+        category: category || null,
+        notes: notes || null,
+        createdBy: userId,
+        createdAt: new Date().toISOString(),
+        kcal100g: kcal100g ?? null,
+        protein100g: protein100g ?? null,
+        carbs100g: carbs100g ?? null,
+        fat100g: fat100g ?? null,
+        fiber100g: fiber100g ?? null,
+        _optimistic: true,
+      };
 
-      const userListIds = (allUserLists || []).map((l) => l[COLUMNS.SHOPPING_LISTS.ID]);
+      setItems((current) => [optimisticItem, ...current]);
 
-      let existingProduct = null;
-      let sameListProduct = null;
+      try {
+        // Usa RPC per logica atomica add_or_update_item
+        const { data: rpcResult, error: rpcError } = await supabase.rpc('add_or_update_item', {
+          p_list_id: listId,
+          p_name: cleanName,
+          p_quantity: Number(quantity) || 1,
+          p_unit: unit || 'pezzi',
+          p_category: category || null,
+          p_notes: notes || null,
+          p_user_id: userId,
+          p_kcal100g: kcal100g ?? null,
+          p_protein100g: protein100g ?? null,
+          p_carbs100g: carbs100g ?? null,
+          p_fat100g: fat100g ?? null,
+          p_fiber100g: fiber100g ?? null,
+        });
 
-      if (userListIds.length > 0) {
-        const { data: existingItems } = await supabase
-          .from(TABLES.SHOPPING_ITEMS)
-          .select('*')
-          .in(COLUMNS.SHOPPING_ITEMS.LIST_ID, userListIds);
+        if (rpcError) throw rpcError;
 
-        // Prima controlla stessa lista (priorità: aggiorna quantità)
-        sameListProduct = existingItems?.find(
-          (item) => item[COLUMNS.SHOPPING_ITEMS.LIST_ID] === listId &&
-                    item[COLUMNS.SHOPPING_ITEMS.NAME].toLowerCase() === normalizedName
-        ) || null;
+        const result = rpcResult;
+        if (result?.error) throw new Error(result.error);
 
-        // Poi controlla altre liste (duplica con valori nutrizionali)
-        if (!sameListProduct) {
-          existingProduct = existingItems?.find(
-            (item) => item[COLUMNS.SHOPPING_ITEMS.LIST_ID] !== listId &&
-                      item[COLUMNS.SHOPPING_ITEMS.NAME].toLowerCase() === normalizedName
-          ) || null;
-        }
-      }
+        // Sostituisci item ottimistico con quello reale
+        setItems((current) =>
+          current.map((item) =>
+            item.id === tempId
+              ? { ...item, id: result.item_id, _optimistic: false }
+              : item
+          )
+        );
 
-      // 1. Esiste nella stessa lista → aggiorna quantità
-      if (sameListProduct) {
-        const newQuantity = Number(sameListProduct[COLUMNS.SHOPPING_ITEMS.QUANTITY]) + (Number(quantity) || 1);
-
-        const { error: updateError } = await supabase
-          .from(TABLES.SHOPPING_ITEMS)
-          .update({ [COLUMNS.SHOPPING_ITEMS.QUANTITY]: newQuantity })
-          .eq(COLUMNS.SHOPPING_ITEMS.ID, sameListProduct[COLUMNS.SHOPPING_ITEMS.ID]);
-
-        if (updateError) {
-          setError(updateError.message || "Errore durante l'aggiornamento del prodotto.");
-          return false;
-        }
-
-        setError('');
-        await refreshItems(listId);
-        return true;
-      }
-
-      // 2. Esiste in altre liste → duplica copiando valori nutrizionali
-      if (existingProduct) {
-        const { error: insertError } = await supabase.from(TABLES.SHOPPING_ITEMS).insert([{
-          [COLUMNS.SHOPPING_ITEMS.LIST_ID]: listId,
-          [COLUMNS.SHOPPING_ITEMS.NAME]: existingProduct[COLUMNS.SHOPPING_ITEMS.NAME],
-          [COLUMNS.SHOPPING_ITEMS.QUANTITY]: Number(quantity) || 1,
-          [COLUMNS.SHOPPING_ITEMS.UNIT]: existingProduct[COLUMNS.SHOPPING_ITEMS.UNIT],
-          [COLUMNS.SHOPPING_ITEMS.BOUGHT]: false,
-          [COLUMNS.SHOPPING_ITEMS.CATEGORY]: existingProduct[COLUMNS.SHOPPING_ITEMS.CATEGORY],
-          [COLUMNS.SHOPPING_ITEMS.NOTES]: existingProduct[COLUMNS.SHOPPING_ITEMS.NOTES],
-          [COLUMNS.SHOPPING_ITEMS.KCAL100G]: existingProduct[COLUMNS.SHOPPING_ITEMS.KCAL100G] ?? null,
-          [COLUMNS.SHOPPING_ITEMS.PROTEIN100G]: existingProduct[COLUMNS.SHOPPING_ITEMS.PROTEIN100G] ?? null,
-          [COLUMNS.SHOPPING_ITEMS.CARBS100G]: existingProduct[COLUMNS.SHOPPING_ITEMS.CARBS100G] ?? null,
-          [COLUMNS.SHOPPING_ITEMS.FAT100G]: existingProduct[COLUMNS.SHOPPING_ITEMS.FAT100G] ?? null,
-          [COLUMNS.SHOPPING_ITEMS.FIBER100G]: existingProduct[COLUMNS.SHOPPING_ITEMS.FIBER100G] ?? null,
-          [COLUMNS.SHOPPING_ITEMS.CREATED_BY]: userId,
-        }]);
-
-        if (insertError) {
-          setError(insertError.message || "Errore durante l'aggiunta del prodotto.");
-          return false;
-        }
+        // Salva in saved_products (fire-and-forget)
+        supabase.rpc('save_product_for_reuse', {
+          p_user_id: userId,
+          p_name: cleanName,
+          p_quantity: Number(quantity) || 1,
+          p_unit: unit || 'pezzi',
+          p_category: category || null,
+          p_notes: notes || null,
+          p_kcal100g: kcal100g ?? null,
+          p_protein100g: protein100g ?? null,
+          p_carbs100g: carbs100g ?? null,
+          p_fat100g: fat100g ?? null,
+          p_fiber100g: fiber100g ?? null,
+        }).catch((e) => console.error('save_product_for_reuse failed:', e));
 
         setError('');
-        await refreshItems(listId);
         return true;
-      }
-
-      // 3. Nuovo prodotto (non esiste in nessuna lista)
-      const { error: insertError } = await supabase.from(TABLES.SHOPPING_ITEMS).insert([{
-        [COLUMNS.SHOPPING_ITEMS.LIST_ID]: listId,
-        [COLUMNS.SHOPPING_ITEMS.NAME]: cleanName,
-        [COLUMNS.SHOPPING_ITEMS.QUANTITY]: Number(quantity) || 1,
-        [COLUMNS.SHOPPING_ITEMS.UNIT]: unit,
-        [COLUMNS.SHOPPING_ITEMS.BOUGHT]: false,
-        [COLUMNS.SHOPPING_ITEMS.CATEGORY]: category || null,
-        [COLUMNS.SHOPPING_ITEMS.NOTES]: notes || null,
-        [COLUMNS.SHOPPING_ITEMS.KCAL100G]: kcal100g ?? null,
-        [COLUMNS.SHOPPING_ITEMS.PROTEIN100G]: protein100g ?? null,
-        [COLUMNS.SHOPPING_ITEMS.CARBS100G]: carbs100g ?? null,
-        [COLUMNS.SHOPPING_ITEMS.FAT100G]: fat100g ?? null,
-        [COLUMNS.SHOPPING_ITEMS.FIBER100G]: fiber100g ?? null,
-        [COLUMNS.SHOPPING_ITEMS.CREATED_BY]: userId,
-      }]);
-
-      if (insertError) {
-        setError(insertError.message || "Errore durante l'aggiunta del prodotto.");
+      } catch (err) {
+        // Rollback: rimuovi item ottimistico
+        setItems((current) => current.filter((item) => item.id !== tempId));
+        setError(err.message || 'Errore durante l\'aggiunta del prodotto.');
         return false;
       }
-
-      // Salva automaticamente il prodotto per uso futuro (con valori nutrizionali se presenti).
-      const { error: saveError } = await supabase.from(TABLES.SAVED_PRODUCTS).upsert([{
-        [COLUMNS.SAVED_PRODUCTS.USER_ID]: userId,
-        [COLUMNS.SAVED_PRODUCTS.NAME]: cleanName,
-        [COLUMNS.SAVED_PRODUCTS.QUANTITY]: Number(quantity) || 1,
-        [COLUMNS.SAVED_PRODUCTS.UNIT]: unit,
-        [COLUMNS.SAVED_PRODUCTS.CATEGORY]: category || null,
-        [COLUMNS.SAVED_PRODUCTS.NOTES]: notes || null,
-        [COLUMNS.SAVED_PRODUCTS.KCAL100G]: kcal100g ?? null,
-        [COLUMNS.SAVED_PRODUCTS.PROTEIN100G]: protein100g ?? null,
-        [COLUMNS.SAVED_PRODUCTS.CARBS100G]: carbs100g ?? null,
-        [COLUMNS.SAVED_PRODUCTS.FAT100G]: fat100g ?? null,
-        [COLUMNS.SAVED_PRODUCTS.FIBER100G]: fiber100g ?? null,
-      }], { onConstraint: `${COLUMNS.SAVED_PRODUCTS.USER_ID},${COLUMNS.SAVED_PRODUCTS.NAME}` });
-
-      if (saveError) {
-        console.error('Salvataggio prodotto per uso futuro fallito:', saveError);
-      }
-
-      setError('');
-      await refreshItems(listId);
-      return true;
     },
-    [session, refreshItems]
+    [session]
   );
 
   const toggleItem = useCallback(
@@ -292,31 +253,51 @@ export function useShoppingList(session, ensureProfile) {
       const item = items.find((entry) => entry.id === id);
       if (!item || !supabase || !selectedListId) return;
 
-      const { error: updateError } = await supabase
-        .from(TABLES.SHOPPING_ITEMS)
-        .update({ [COLUMNS.SHOPPING_ITEMS.BOUGHT]: !item.bought })
-        .eq(COLUMNS.SHOPPING_ITEMS.ID, id);
+      // Optimistic update
+      const previousBought = item.bought;
+      setItems((current) =>
+        current.map((entry) => (entry.id === id ? { ...entry, bought: !entry.bought } : entry))
+      );
 
-      if (!updateError) {
+      try {
+        const { error: updateError } = await supabase
+          .from(TABLES.SHOPPING_ITEMS)
+          .update({ [COLUMNS.SHOPPING_ITEMS.BOUGHT]: !item.bought })
+          .eq(COLUMNS.SHOPPING_ITEMS.ID, id);
+
+        if (updateError) throw updateError;
+      } catch (err) {
+        // Rollback
         setItems((current) =>
-          current.map((entry) => (entry.id === id ? { ...entry, bought: !entry.bought } : entry))
+          current.map((entry) => (entry.id === id ? { ...entry, bought: previousBought } : entry))
         );
+        setError(err.message || 'Errore durante l\'aggiornamento.');
       }
     },
-    [items, selectedListId]
+    [selectedListId]
   );
 
   const removeItem = useCallback(
     async (id) => {
       if (!supabase || !selectedListId) return;
 
-      const { error: deleteError } = await supabase
-        .from(TABLES.SHOPPING_ITEMS)
-        .delete()
-        .eq(COLUMNS.SHOPPING_ITEMS.ID, id);
+      // Optimistic update - salva item per rollback
+      const itemToRemove = items.find((entry) => entry.id === id);
+      setItems((current) => current.filter((item) => item.id !== id));
 
-      if (!deleteError) {
-        setItems((current) => current.filter((item) => item.id !== id));
+      try {
+        const { error: deleteError } = await supabase
+          .from(TABLES.SHOPPING_ITEMS)
+          .delete()
+          .eq(COLUMNS.SHOPPING_ITEMS.ID, id);
+
+        if (deleteError) throw deleteError;
+      } catch (err) {
+        // Rollback - reinserisci item
+        if (itemToRemove) {
+          setItems((current) => [itemToRemove, ...current]);
+        }
+        setError(err.message || 'Errore durante l\'eliminazione.');
       }
     },
     [selectedListId]
@@ -326,21 +307,35 @@ export function useShoppingList(session, ensureProfile) {
     async (id, updates) => {
       if (!supabase || !selectedListId) return false;
 
-      const { error: updateError } = await supabase
-        .from(TABLES.SHOPPING_ITEMS)
-        .update(updates)
-        .eq(COLUMNS.SHOPPING_ITEMS.ID, id);
+      // Optimistic update
+      const previousItem = items.find((entry) => entry.id === id);
+      if (!previousItem) return false;
 
-      if (updateError) {
-        setError(updateError.message || 'Errore durante la modifica.');
+      setItems((current) =>
+        current.map((entry) => (entry.id === id ? { ...entry, ...updates } : entry))
+      );
+
+      try {
+        const { error: updateError } = await supabase
+          .from(TABLES.SHOPPING_ITEMS)
+          .update(updates)
+          .eq(COLUMNS.SHOPPING_ITEMS.ID, id);
+
+        if (updateError) throw updateError;
+        setError('');
+        return true;
+      } catch (err) {
+        // Rollback
+        if (previousItem) {
+          setItems((current) =>
+            current.map((entry) => (entry.id === id ? previousItem : entry))
+          );
+        }
+        setError(err.message || 'Errore durante la modifica.');
         return false;
       }
-
-      setError('');
-      await refreshItems(selectedListId);
-      return true;
     },
-    [selectedListId, refreshItems]
+    [selectedListId]
   );
 
   const createList = useCallback(
@@ -353,27 +348,50 @@ export function useShoppingList(session, ensureProfile) {
         return null;
       }
 
-      setError('');
-      const { data: createdList, error: insertError } = await supabase
-        .from(TABLES.SHOPPING_LISTS)
-        .insert([{
-          [COLUMNS.SHOPPING_LISTS.NAME]: trimmedName,
-          [COLUMNS.SHOPPING_LISTS.DESCRIPTION]: 'Lista personale',
-          [COLUMNS.SHOPPING_LISTS.OWNER_ID]: session.user.id,
-        }])
-        .select('*')
-        .single();
+      // Optimistic update
+      const tempId = generateTempId();
+      const optimisticList = {
+        id: tempId,
+        name: trimmedName,
+        description: 'Lista personale',
+        ownerId: session.user.id,
+        createdAt: new Date().toISOString(),
+        itemCount: 0,
+        _optimistic: true,
+      };
 
-      if (insertError) {
-        setError(insertError.message || 'Impossibile creare la nuova lista.');
+      setLists((current) => [optimisticList, ...current]);
+
+      try {
+        setError('');
+        const { data: createdList, error: insertError } = await supabase
+          .from(TABLES.SHOPPING_LISTS)
+          .insert([{
+            [COLUMNS.SHOPPING_LISTS.NAME]: trimmedName,
+            [COLUMNS.SHOPPING_LISTS.DESCRIPTION]: 'Lista personale',
+            [COLUMNS.SHOPPING_LISTS.OWNER_ID]: session.user.id,
+          }])
+          .select('*')
+          .single();
+
+        if (insertError) throw insertError;
+
+        const normalized = { ...normalizeLists([createdList])[0], itemCount: 0 };
+        
+        // Sostituisci lista ottimistica con quella reale
+        setLists((current) =>
+          current.map((list) => (list.id === tempId ? { ...normalized, _optimistic: false } : list))
+        );
+        
+        setSelectedListId(normalized.id);
+        setItems([]);
+        return normalized;
+      } catch (err) {
+        // Rollback
+        setLists((current) => current.filter((list) => list.id !== tempId));
+        setError(err.message || 'Impossibile creare la nuova lista.');
         return null;
       }
-
-      const normalized = { ...normalizeLists([createdList])[0], itemCount: 0 };
-      setLists((current) => [normalized, ...current]);
-      setSelectedListId(normalized.id);
-      setItems([]);
-      return normalized;
     },
     [session]
   );
@@ -391,22 +409,31 @@ export function useShoppingList(session, ensureProfile) {
     async (listId) => {
       if (!supabase || !session) return false;
 
-      const { error: deleteError } = await supabase
-        .from(TABLES.SHOPPING_LISTS)
-        .delete()
-        .eq(COLUMNS.SHOPPING_LISTS.ID, listId);
+      // Optimistic update - salva lista per rollback
+      const listToRemove = lists.find((l) => l.id === listId);
+      setLists((current) => current.filter((l) => l.id !== listId));
 
-      if (deleteError) {
-        setError(deleteError.message || 'Impossibile eliminare la lista.');
+      try {
+        const { error: deleteError } = await supabase
+          .from(TABLES.SHOPPING_LISTS)
+          .delete()
+          .eq(COLUMNS.SHOPPING_LISTS.ID, listId);
+
+        if (deleteError) throw deleteError;
+
+        if (selectedListId === listId) {
+          setSelectedListId(null);
+          setItems([]);
+        }
+        return true;
+      } catch (err) {
+        // Rollback
+        if (listToRemove) {
+          setLists((current) => [listToRemove, ...current]);
+        }
+        setError(err.message || 'Impossibile eliminare la lista.');
         return false;
       }
-
-      setLists((current) => current.filter((l) => l.id !== listId));
-      if (selectedListId === listId) {
-        setSelectedListId(null);
-        setItems([]);
-      }
-      return true;
     },
     [session, selectedListId]
   );

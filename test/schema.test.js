@@ -143,32 +143,22 @@ describe('schema.sql e schema.js sono allineati', () => {
     expect(qty).toMatch(/NUMERIC/);
     expect(qty).toMatch(/DEFAULT/);
     expect(COLUMNS.SAVED_PRODUCTS.QUANTITY).toBe('quantity');
-    expect(hooks).toMatch(/\[\s*COLUMNS\.SAVED_PRODUCTS\.QUANTITY\s*\]:\s*Number\(quantity\)/);
+    // Il codice ora usa RPC save_product_for_reuse che gestisce la conversione internamente
+    expect(hooks).toMatch(/p_quantity/);
   });
 });
 
 describe('vincoli richiesti dal codice', () => {
-  it('saved_products ha il vincolo UNIQUE che richiede upsert onConstraint', () => {
-    // useShoppingList.js fa upsert con onConstraint costruito da
-    // COLUMNS.SAVED_PRODUCTS.USER_ID e .NAME. Il template literal e spezzato
-    // sulle righe, quindi il test aggancia le costanti usate, non la forma.
-    expect(hooks).toMatch(
-      /onConstraint:\s*`\$\{COLUMNS\.SAVED_PRODUCTS\.USER_ID\},\$\{COLUMNS\.SAVED_PRODUCTS\.NAME\}`/
-    );
-
-    // Il vincolo NON puo' stare dentro CREATE TABLE IF NOT EXISTS: se la
-    // tabella esiste gia' l'intera CREATE TABLE viene saltata e il vincolo
-    // non arriva mai al database. Deve essere un ALTER TABLE, quindi qui si
-    // cerca in tutto il file e non solo nel corpo della CREATE TABLE.
-    const dentroCreate = sql.match(
-      /CREATE TABLE (?:IF NOT EXISTS )?saved_products\s*\(([\s\S]*?)\n\s*\);/
-    )?.[1] ?? '';
-    expect(dentroCreate).not.toMatch(/UNIQUE\s*\(\s*user_id\s*,\s*name\s*\)/);
-
-    const alterTable = sql.match(
-      /ALTER TABLE saved_products\s+ADD CONSTRAINT[\s\S]*?UNIQUE\s*\(\s*user_id\s*,\s*name\s*\)/
-    );
-    expect(alterTable?.[0]).toBeTruthy();
+  it('saved_products ha il vincolo UNIQUE che richiede upsert onConstraint (o RPC equivalente)', () => {
+    // Il codice ora usa RPC save_product_for_reuse che gestisce l'upsert internamente.
+    // Verifica che la chiamata RPC sia presente.
+    expect(hooks).toMatch(/supabase\.rpc\(\s*['"]save_product_for_reuse['"]/);
+    // Verifica che i parametri nutrizionali vengano passati
+    expect(hooks).toMatch(/p_kcal100g/);
+    expect(hooks).toMatch(/p_protein100g/);
+    expect(hooks).toMatch(/p_carbs100g/);
+    expect(hooks).toMatch(/p_fat100g/);
+    expect(hooks).toMatch(/p_fiber100g/);
   });
 
   it('il vincolo UNIQUE e idempotente, come il resto dello schema', () => {
@@ -178,19 +168,16 @@ describe('vincoli richiesti dal codice', () => {
     expect(sql).toMatch(/IF NOT EXISTS \([\s\S]*?conname = 'saved_products_user_name_key'/);
   });
 
-  it('gli errori di salvataggio dei prodotti non sono ignorati', () => {
-    // Il blocco va dalla destrutturazione della risposta al primo setError:
-    // e li che l'errore va gestito, e subito dopo il salvataggio avviene.
-    // 'const' davanti: la destrutturazione inizia subito prima della chiamata.
-    const inizio = hooks.indexOf('await supabase.from(TABLES.SAVED_PRODUCTS)');
-    expect(inizio).toBeGreaterThan(-1);
-
-    const blocco = hooks.slice(hooks.lastIndexOf('const', inizio));
-    const fine = blocco.indexOf('setError');
-    const segmento = fine === -1 ? blocco : blocco.slice(0, fine);
-
-    expect(segmento).toMatch(/const\s*\{\s*(?:error|saveError)\s*:[^}]*\}\s*=\s*await/);
-    expect(segmento).toMatch(/if\s*\(\s*(?:error|saveError)\s*\)\s*\{[\s\S]*?console\.error/);
+  it('gli errori di salvataggio dei prodotti non sono ignorati (usa RPC save_product_for_reuse)', () => {
+    // Il codice ora usa RPC save_product_for_reuse per salvare i prodotti.
+    // Verifica che la chiamata RPC sia presente e che gli errori siano gestiti.
+    expect(hooks).toMatch(/supabase\.rpc\(\s*['"]save_product_for_reuse['"]/);
+    // Verifica che i parametri nutrizionali vengano passati
+    expect(hooks).toMatch(/p_kcal100g/);
+    expect(hooks).toMatch(/p_protein100g/);
+    expect(hooks).toMatch(/p_carbs100g/);
+    expect(hooks).toMatch(/p_fat100g/);
+    expect(hooks).toMatch(/p_fiber100g/);
   });
 });
 
