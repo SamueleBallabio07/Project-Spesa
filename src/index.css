@@ -1062,6 +1062,71 @@ select.field-input {
   flex: 0 0 auto;
 }
 
+.item-quantity {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+}
+
+.item-quantity .stepper {
+  display: flex;
+  align-items: center;
+  background: var(--separator);
+  border-radius: var(--radius-pill);
+  padding: 2px;
+}
+
+.item-quantity .stepper button {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--card);
+  color: var(--text);
+  font-size: 19px;
+  line-height: 1;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-1);
+  transition: background 0.15s ease, color 0.15s ease, transform 0.12s ease;
+}
+
+.item-quantity .stepper button:active {
+  transform: scale(0.9);
+}
+
+.item-quantity .stepper button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.item-quantity .stepper button:not(:disabled):active {
+  background: var(--tiger-gold);
+  color: var(--text-on-gold);
+}
+
+.item-quantity .stepper-value {
+  min-width: 72px;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.item-quantity .stepper-value small {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.item-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+}
+
 /* ---------------- modifica ---------------- */
 .edit {
   display: flex;

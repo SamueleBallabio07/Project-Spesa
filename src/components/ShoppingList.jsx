@@ -245,10 +245,33 @@ export default function ShoppingList({
                         <div className="item-text">
                           <span className="item-name">{item.name}</span>
                           <span className="item-meta">
-                            {formatQuantity(item.quantity, item.unit)}
                             {item.category ? ` · ${item.category}` : ''}
                             {item.notes ? ` · ${item.notes}` : ''}
                           </span>
+                        </div>
+
+                        <div className="item-quantity">
+                          <div className="stepper">
+                            <button
+                              type="button"
+                              onClick={() => onUpdateItem(item.id, { quantity: Math.max(1, item.quantity - 1) })}
+                              aria-label={`Diminuisci quantità di ${item.name}`}
+                              disabled={item.bought}
+                            >
+                              −
+                            </button>
+                            <span className="stepper-value">
+                              {formatQuantity(item.quantity, item.unit)}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => onUpdateItem(item.id, { quantity: item.quantity + 1 })}
+                              aria-label={`Aumenta quantità di ${item.name}`}
+                              disabled={item.bought}
+                            >
+                              +
+                            </button>
+                          </div>
                         </div>
 
                         <div className="item-actions">
