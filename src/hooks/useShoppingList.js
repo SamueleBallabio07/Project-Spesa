@@ -222,19 +222,23 @@ export function useShoppingList(session, ensureProfile) {
         );
 
         // Salva in saved_products (fire-and-forget)
-        supabase.rpc('save_product_for_reuse', {
-          p_user_id: userId,
-          p_name: cleanName,
-          p_quantity: Number(quantity) || 1,
-          p_unit: unit || 'pezzi',
-          p_category: category || null,
-          p_notes: notes || null,
-          p_kcal100g: kcal100g ?? null,
-          p_protein100g: protein100g ?? null,
-          p_carbs100g: carbs100g ?? null,
-          p_fat100g: fat100g ?? null,
-          p_fiber100g: fiber100g ?? null,
-        }).catch((e) => console.error('save_product_for_reuse failed:', e));
+        try {
+          await supabase.rpc('save_product_for_reuse', {
+            p_user_id: userId,
+            p_name: cleanName,
+            p_quantity: Number(quantity) || 1,
+            p_unit: unit || 'pezzi',
+            p_category: category || null,
+            p_notes: notes || null,
+            p_kcal100g: kcal100g ?? null,
+            p_protein100g: protein100g ?? null,
+            p_carbs100g: carbs100g ?? null,
+            p_fat100g: fat100g ?? null,
+            p_fiber100g: fiber100g ?? null,
+          });
+        } catch (e) {
+          console.error('save_product_for_reuse failed:', e);
+        }
 
         setError('');
         return true;

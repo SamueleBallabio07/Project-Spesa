@@ -3,7 +3,7 @@ import { nutritionFor, formatNutrition, formatMacros } from '../lib/nutrition';
 /**
  * Card prodotto riutilizzabile per visualizzare alimenti del catalogo.
  * Supporta due modalità:
- * - "search": risultati ricerca catalogo (ShoppingList) - semplificato
+ * - "search": risultati ricerca catalogo (ShoppingList) - con stepper quantità
  * - "catalog": catalogo completo (CatalogScreen) - con stepper completo, macro, tag "aggiunto"
  */
 export function FoodCard({
@@ -45,7 +45,7 @@ export function FoodCard({
       )}
 
       <div className="food-add">
-        {variant === 'catalog' && (
+        {variant !== 'search' && (
           <div className="stepper">
             <button
               type="button"
