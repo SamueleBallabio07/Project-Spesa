@@ -254,7 +254,8 @@ export default function ShoppingList({
                           <div className="stepper">
                             <button
                               type="button"
-                              onClick={() => onUpdateItem(item.id, { quantity: Math.max(1, item.quantity - 1) })}
+                              onClick={(e) => { e.stopPropagation(); onUpdateItem(item.id, { quantity: Math.max(1, item.quantity - 1) }); }}
+                              onTouchStart={(e) => { e.stopPropagation(); onUpdateItem(item.id, { quantity: Math.max(1, item.quantity - 1) }); }}
                               aria-label={`Diminuisci quantità di ${item.name}`}
                               disabled={item.bought}
                             >
@@ -265,7 +266,8 @@ export default function ShoppingList({
                             </span>
                             <button
                               type="button"
-                              onClick={() => onUpdateItem(item.id, { quantity: item.quantity + 1 })}
+                              onClick={(e) => { e.stopPropagation(); onUpdateItem(item.id, { quantity: item.quantity + 1 }); }}
+                              onTouchStart={(e) => { e.stopPropagation(); onUpdateItem(item.id, { quantity: item.quantity + 1 }); }}
                               aria-label={`Aumenta quantità di ${item.name}`}
                               disabled={item.bought}
                             >

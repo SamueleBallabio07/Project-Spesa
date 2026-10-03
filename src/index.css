@@ -1075,6 +1075,7 @@ select.field-input {
   background: var(--separator);
   border-radius: var(--radius-pill);
   padding: 2px;
+  touch-action: manipulation;
 }
 
 .item-quantity .stepper button {
