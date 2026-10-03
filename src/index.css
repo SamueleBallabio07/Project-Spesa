@@ -1091,6 +1091,8 @@ select.field-input {
   justify-content: center;
   box-shadow: var(--shadow-1);
   transition: background 0.15s ease, color 0.15s ease, transform 0.12s ease;
+  pointer-events: auto;
+  z-index: 10;
 }
 
 .item-quantity .stepper button:active {
