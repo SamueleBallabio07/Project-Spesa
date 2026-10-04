@@ -88,6 +88,7 @@ const COMPONENTS = [
   'src/components/ShoppingList.jsx',
   'src/components/CatalogScreen.jsx',
   'src/components/FoodCard.jsx',
+  'src/components/QuantityEditor.jsx',
 ];
 
 describe('le callback usate nei componenti arrivano davvero come prop', () => {

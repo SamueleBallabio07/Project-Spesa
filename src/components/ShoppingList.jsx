@@ -3,7 +3,9 @@ import { ThemeToggle } from './ThemeToggle';
 import { SearchBar } from './SearchBar';
 import { FoodCard } from './FoodCard';
 import { EmptyState } from './EmptyState';
+import { QuantityEditor } from './QuantityEditor';
 import { useStepper } from '../hooks/useStepper';
+import { MIN_QUANTITY, roundQuantity } from '../lib/quantity';
 
 const UNIT_LABELS = {
   pezzo: 'pezzo',
@@ -42,6 +44,9 @@ export default function ShoppingList({
   const [confirmDeleteList, setConfirmDeleteList] = useState(null);
   const [catalogQuery, setCatalogQuery] = useState('');
   const [catalogResults, setCatalogResults] = useState([]);
+  // Una riga per volta: due campi aperti insieme su uno schermo stretto
+  // si coprirebbero, e non si sa quale dei due stai scrivendo.
+  const [editingId, setEditingId] = useState(null);
 
   const { picked, stepFor, initialQty, pickQty, clearAll, getCurrentUnit, getStepForCurrentUnit } = useStepper();
 
@@ -259,24 +264,50 @@ export default function ShoppingList({
                               type="button"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                onUpdateItem(item.id, { quantity: Math.max(1, item.quantity - 1) });
+                                onUpdateItem(item.id, {
+                                  quantity: Math.max(MIN_QUANTITY, roundQuantity(item.quantity - 1)),
+                                });
                               }}
                               aria-label={`Diminuisci quantità di ${item.name}`}
-                              disabled={item.bought}
+                              disabled={item.bought || editingId === item.id}
                             >
                               −
                             </button>
-                            <span className="stepper-value">
-                              {formatQuantity(item.quantity, item.unit)}
-                            </span>
+                            {editingId === item.id ? (
+                              <QuantityEditor
+                                value={item.quantity}
+                                unitLabel={UNIT_LABELS[item.unit] || item.unit}
+                                itemName={item.name}
+                                onCommit={(quantity) => {
+                                  setEditingId(null);
+                                  onUpdateItem(item.id, { quantity });
+                                }}
+                                onCancel={() => setEditingId(null)}
+                              />
+                            ) : (
+                              <button
+                                type="button"
+                                className="stepper-edit"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditingId(item.id);
+                                }}
+                                aria-label={`Modifica quantità di ${item.name}`}
+                                disabled={item.bought}
+                              >
+                                {formatQuantity(item.quantity, item.unit)}
+                              </button>
+                            )}
                             <button
                               type="button"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                onUpdateItem(item.id, { quantity: item.quantity + 1 });
+                                onUpdateItem(item.id, {
+                                  quantity: roundQuantity(item.quantity + 1),
+                                });
                               }}
                               aria-label={`Aumenta quantità di ${item.name}`}
-                              disabled={item.bought}
+                              disabled={item.bought || editingId === item.id}
                             >
                               +
                             </button>
