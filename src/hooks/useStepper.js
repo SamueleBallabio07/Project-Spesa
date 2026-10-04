@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { roundQuantity, MIN_QUANTITY } from '../lib/quantity';
+import { stepForUnit } from '../lib/units';
 
 /**
  * Hook per gestire lo stepper quantità nei prodotti.
@@ -17,13 +19,9 @@ export function useStepper(initialQuantities = {}) {
     unitSelectionsRef.current = unitSelections;
   }, [unitSelections]);
 
-  const stepForUnit = useCallback((unit) => {
-    if (unit === 'pezzi') return 1;
-    if (unit === 'kg') return 0.1;
-    return 10;
-  }, []);
-
-  const stepFor = useCallback((food) => stepForUnit(food.unitDefault), [stepForUnit]);
+  // Il passo lo decide units.js: e' la stessa tabella usata dal selettore
+  // unita', quindi non possono dare risultati diversi.
+  const stepFor = useCallback((food) => stepForUnit(food.unitDefault), []);
 
   const initialQty = useCallback((food) => {
     if (picked[food.fdcId] !== undefined) return picked[food.fdcId];
@@ -42,10 +40,9 @@ export function useStepper(initialQuantities = {}) {
     // fatta: il ref non è ancora aggiornato.
     const currentUnit = unit || unitSelectionsRef.current[food.fdcId] || food.unitDefault;
     const step = stepForUnit(currentUnit);
-    const value = Math.max(step, Number(next) || step);
-    const rounded = Math.round(value * 100) / 100;
-    setPicked((prev) => ({ ...prev, [food.fdcId]: rounded }));
-  }, [stepForUnit]);
+    const value = Math.max(MIN_QUANTITY, Number(next) || step);
+    setPicked((prev) => ({ ...prev, [food.fdcId]: roundQuantity(value) }));
+  }, []);
 
   const getCurrentUnit = useCallback((food) => {
     return unitSelectionsRef.current[food.fdcId] || food.unitDefault;
@@ -54,7 +51,7 @@ export function useStepper(initialQuantities = {}) {
   const getStepForCurrentUnit = useCallback((food) => {
     const unit = unitSelectionsRef.current[food.fdcId] || food.unitDefault;
     return stepForUnit(unit);
-  }, [stepForUnit]);
+  }, []);
 
   const resetQty = useCallback((fdcId) => {
     setPicked((prev) => {

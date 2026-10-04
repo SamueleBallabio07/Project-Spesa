@@ -593,6 +593,79 @@ button {
   margin-left: 2px;
 }
 
+/* ---------------- selettore unita' ---------------- */
+.unit-picker {
+  position: relative;
+  flex: 0 0 auto;
+  display: inline-flex;
+}
+
+.unit-trigger {
+  min-width: 52px;
+  min-height: var(--tap);
+  padding: 0 14px;
+  border-radius: var(--radius-pill);
+  background: var(--amber-light);
+  color: var(--text);
+  font-size: var(--fs-base);
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.unit-trigger:hover {
+  background: var(--amber-light);
+  filter: brightness(0.97);
+}
+
+.unit-trigger.is-open {
+  background: var(--amber);
+}
+
+/* Si apre verso l'alto: le card stanno in fondo allo schermo e sotto
+   finirebbero fuori viewport. */
+.unit-menu {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 0;
+  z-index: 30;
+  min-width: 76px;
+  padding: 4px;
+  margin: 0;
+  list-style: none;
+  background: var(--card);
+  border: 1px solid var(--separator);
+  border-radius: var(--radius-btn);
+  box-shadow: var(--shadow-3);
+}
+
+.unit-option {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: var(--tap);
+  padding: 0 12px;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  font-size: var(--fs-base);
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.unit-option:hover {
+  background: var(--separator);
+}
+
+.unit-option.is-active {
+  background: var(--amber-light);
+  color: var(--text);
+  font-weight: 700;
+}
+
 .food-add-btn {
   flex: 1;
   min-height: var(--tap);

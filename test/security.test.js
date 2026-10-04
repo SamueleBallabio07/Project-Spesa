@@ -49,6 +49,8 @@ const sources = [
   'src/lib/supabase.js',
   'src/lib/schema.js',
   'src/lib/nutrition.js',
+  'src/lib/quantity.js',
+  'src/lib/units.js',
   'src/components/Auth.jsx',
   'src/components/ShoppingList.jsx',
   'src/components/CatalogScreen.jsx',

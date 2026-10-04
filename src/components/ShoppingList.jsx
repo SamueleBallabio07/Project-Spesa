@@ -67,7 +67,10 @@ export default function ShoppingList({
     const ok = await onAddFood({
       name: food.displayName,
       quantity,
-      unit: food.unitDefault,
+      // Converte sempre l'unita' scelta: aggiungere 100 kg quando l'utente
+      // aveva scritto 100 g e poi scelto i chilogrammi non e' quello che
+      // voleva comprare.
+      unit: getCurrentUnit(food),
       category: food.category,
       kcal100g: food.kcal100g,
       protein100g: food.protein100g,
@@ -210,7 +213,7 @@ export default function ShoppingList({
                       currentUnit={getCurrentUnit(food)}
                       step={getStepForCurrentUnit(food)}
                       onQuantityChange={pickQty}
-                      onUnitChange={(food, unit) => pickQty(food, picked[food.fdcId] ?? initialQty(food), unit)}
+                      onUnitChange={(food, nextQuantity, unit) => pickQty(food, nextQuantity, unit)}
                       onAdd={handleCatalogAdd}
                       disabled={!selectedListId}
                       variant="search"

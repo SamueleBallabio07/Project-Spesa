@@ -1,6 +1,6 @@
 import { nutritionFor, formatNutrition, formatMacros } from '../lib/nutrition';
-
-const UNIT_OPTIONS = ['g', 'kg', 'ml', 'l', 'pezzi'];
+import { UnitPicker } from './UnitPicker';
+import { sizeLabelInItalian, stepForUnit, unitsFor } from '../lib/units';
 
 /**
  * Card prodotto riutilizzabile per visualizzare alimenti del catalogo.
@@ -24,13 +24,20 @@ export function FoodCard({
   showNutrition = true,
   variant = 'catalog', // 'search' | 'catalog' | 'list-item'
 }) {
-  const nutrition = nutritionFor(food, quantity, unitDefault);
+  // La nutrizione segue l'unita' scelta: su 1 kg di parmigiano non ha senso
+  // calcolarla come se fosse 1 g.
   const effectiveUnit = currentUnit || unitDefault;
-  const stepValue = step ?? (currentUnit === 'pezzi' ? 1 : currentUnit === 'kg' ? 0.1 : 10);
+  const nutrition = nutritionFor(food, quantity, effectiveUnit);
+  const stepValue = step ?? stepForUnit(effectiveUnit);
 
-  // Determina se mostrare stepper o selettore unità
+  // Un prodotto che si misura in un solo modo non ha un selettore da mostrare.
+  const unitChoices = unitsFor(food);
+  const showUnitSelector = variant === 'search' && unitChoices.length > 1;
   const showStepper = variant === 'catalog' || variant === 'list-item';
-  const showUnitSelector = variant === 'search';
+
+  // Le descrizioni USDA sono per lo piu' in inglese e spesso lunghissime:
+  // solo le brevi tradotte meritano di finire nella lista.
+  const sizeLabel = sizeLabelInItalian(food.sizeLabel);
 
   return (
     <li key={food.fdcId} className="food">
@@ -67,7 +74,7 @@ export function FoodCard({
             </button>
             <span className="stepper-value">
               {quantity}
-              <small>{unitDefault}</small>
+              <small>{effectiveUnit}</small>
             </span>
             <button
               type="button"
@@ -81,17 +88,14 @@ export function FoodCard({
         )}
 
         {showUnitSelector && onUnitChange && (
-          <select
-            className="unit-selector"
-            value={unitDefault}
-            onChange={(e) => onUnitChange(food, e.target.value)}
+          <UnitPicker
+            units={unitChoices}
+            value={effectiveUnit}
+            quantity={quantity}
+            onChange={(nextQuantity, unit) => onUnitChange(food, nextQuantity, unit)}
+            itemName={food.displayName}
             disabled={disabled}
-            aria-label={`Unità per ${food.displayName}`}
-          >
-            {UNIT_OPTIONS.map((unit) => (
-              <option key={unit} value={unit}>{unit}</option>
-            ))}
-          </select>
+          />
         )}
 
         <button
@@ -108,10 +112,10 @@ export function FoodCard({
         <div className="food-nutrition">
           <span className="food-nutrition-main">
             {variant === 'catalog' && nutrition
-              ? formatNutrition(nutrition, unitDefault)
+              ? formatNutrition(nutrition, effectiveUnit)
               : `${food.kcal100g} kcal / 100g`}
-            {food.sizeLabel && unitDefault === 'pezzi' && (
-              <small className="food-size">1 {food.sizeLabel}</small>
+            {sizeLabel && (
+              <small className="food-size">1 {sizeLabel}</small>
             )}
           </span>
           {variant === 'catalog' && showMacros && nutrition && (
