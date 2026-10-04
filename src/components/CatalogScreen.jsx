@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import { nutritionFor, formatNutrition, formatMacros } from '../lib/nutrition';
 import { ThemeToggle } from './ThemeToggle';
 import { SearchBar } from './SearchBar';
@@ -8,6 +8,16 @@ import { FoodCard } from './FoodCard';
 
 const ALL = '__all__';
 const VISIBLE = 40;
+
+// Hook per debounce
+function useDebounce(value, delay) {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+  useEffect(() => {
+    const handler = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(handler);
+  }, [value, delay]);
+  return debouncedValue;
+}
 
 export default function CatalogScreen({
   selectedListId,
@@ -20,6 +30,7 @@ export default function CatalogScreen({
   onAddFood,
 }) {
   const [query, setQuery] = useState('');
+  const debouncedQuery = useDebounce(query, 300);
   const [category, setCategory] = useState(ALL);
   const [added, setAdded] = useState({});
   const [showManual, setShowManual] = useState(false);
@@ -43,8 +54,8 @@ export default function CatalogScreen({
   }, [ensureLoaded]);
 
   const matches = useMemo(
-    () => search(query, category === ALL ? null : category),
-    [search, query, category]
+    () => search(debouncedQuery, category === ALL ? null : category),
+    [search, debouncedQuery, category]
   );
   const results = matches.slice(0, VISIBLE);
 
@@ -338,7 +349,7 @@ export default function CatalogScreen({
             <EmptyState
               title="Nessun risultato"
               body={query ? <>Non c'è “{query}” nel catalogo.</> : 'Catalogo vuoto per questa categoria.'}
-              hint="Puoi comunque aggiungerlo a mano dalla scheda Liste."
+              hint="Puoi comunque aggiungerlo a mano con il form qui sotto."
             />
           ) : (
             <>
