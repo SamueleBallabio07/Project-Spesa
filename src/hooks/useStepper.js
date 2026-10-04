@@ -6,6 +6,7 @@ import { useCallback, useState } from 'react';
  */
 export function useStepper(initialQuantities = {}) {
   const [picked, setPicked] = useState(initialQuantities);
+  const [unitSelections, setUnitSelections] = useState({});
 
   const stepFor = useCallback((food) => {
     if (food.unitDefault === 'pezzi') return 1;
@@ -20,15 +21,30 @@ export function useStepper(initialQuantities = {}) {
     return 100;
   }, [picked]);
 
-  const pickQty = useCallback((food, next) => {
-    const step = stepFor(food);
+  const pickQty = useCallback((food, next, unit) => {
+    // Se viene passato un nuovo unit, aggiorna la selezione unità
+    if (unit && unit !== food.unitDefault) {
+      setUnitSelections((prev) => ({ ...prev, [food.fdcId]: unit }));
+    }
+    
+    const currentUnit = unitSelections[food.fdcId] || food.unitDefault;
+    const step = stepFor({ ...food, unitDefault: currentUnit });
     const value = Math.max(step, Number(next) || step);
     const rounded = Math.round(value * 100) / 100;
     setPicked((prev) => ({ ...prev, [food.fdcId]: rounded }));
   }, [stepFor]);
 
+  const getCurrentUnit = useCallback((food) => {
+    return unitSelections[food.fdcId] || food.unitDefault;
+  }, []);
+
   const resetQty = useCallback((fdcId) => {
     setPicked((prev) => {
+      const next = { ...prev };
+      delete next[fdcId];
+      return next;
+    });
+    setUnitSelections((prev) => {
       const next = { ...prev };
       delete next[fdcId];
       return next;
@@ -37,13 +53,16 @@ export function useStepper(initialQuantities = {}) {
 
   const clearAll = useCallback(() => {
     setPicked({});
+    setUnitSelections({});
   }, []);
 
   return {
     picked,
+    unitSelections,
     stepFor,
     initialQty,
     pickQty,
+    getCurrentUnit,
     resetQty,
     clearAll,
   };

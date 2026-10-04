@@ -199,13 +199,14 @@ export default function ShoppingList({
                     <FoodCard
                       key={food.fdcId}
                       food={food}
-                      quantity={initialQty(food)}
+                      quantity={picked[food.fdcId] ?? initialQty(food)}
                       unitDefault={food.unitDefault}
                       step={stepFor(food)}
                       onQuantityChange={pickQty}
+                      onUnitChange={(food, unit) => pickQty(food, picked[food.fdcId] ?? initialQty(food), unit)}
                       onAdd={handleCatalogAdd}
                       disabled={!selectedListId}
-                      variant="catalog"
+                      variant="search"
                     />
                   ))}
                 </ul>

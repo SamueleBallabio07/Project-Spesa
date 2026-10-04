@@ -1,10 +1,13 @@
 import { nutritionFor, formatNutrition, formatMacros } from '../lib/nutrition';
 
+const UNIT_OPTIONS = ['g', 'kg', 'ml', 'l', 'pezzi'];
+
 /**
  * Card prodotto riutilizzabile per visualizzare alimenti del catalogo.
- * Supporta due modalità:
- * - "search": risultati ricerca catalogo (ShoppingList) - con stepper quantità
+ * Supporta diverse modalità:
+ * - "search": risultati ricerca catalogo (ShoppingList) - con selettore unità
  * - "catalog": catalogo completo (CatalogScreen) - con stepper completo, macro, tag "aggiunto"
+ * - "list-item": prodotti già nella lista - con stepper quantità
  */
 export function FoodCard({
   food,
@@ -12,15 +15,20 @@ export function FoodCard({
   unitDefault,
   step,
   onQuantityChange,
+  onUnitChange,
   onAdd,
   disabled = false,
   justAdded = false,
   showMacros = true,
   showNutrition = true,
-  variant = 'catalog', // 'search' | 'catalog'
+  variant = 'catalog', // 'search' | 'catalog' | 'list-item'
 }) {
   const nutrition = nutritionFor(food, quantity, unitDefault);
   const stepValue = step ?? (unitDefault === 'pezzi' ? 1 : unitDefault === 'kg' ? 0.1 : 10);
+
+  // Determina se mostrare stepper o selettore unità
+  const showStepper = variant === 'catalog' || variant === 'list-item';
+  const showUnitSelector = variant === 'search';
 
   return (
     <li key={food.fdcId} className="food">
@@ -45,11 +53,12 @@ export function FoodCard({
       )}
 
       <div className="food-add">
-        {variant !== 'search' && (
+        {showStepper && (
           <div className="stepper">
             <button
               type="button"
               onClick={() => onQuantityChange?.(food, quantity - stepValue)}
+              onTouchStart={(e) => { e.stopPropagation(); onQuantityChange?.(food, quantity - stepValue); }}
               aria-label={`Diminuisci quantità di ${food.displayName}`}
               disabled={disabled}
             >
@@ -61,13 +70,28 @@ export function FoodCard({
             </span>
             <button
               type="button"
-              onClick={() => onQuantityChange?.(food, quantity + stepValue)}
+              onClick={(e) => { e.stopPropagation(); onQuantityChange?.(food, quantity + stepValue); }}
+              onTouchStart={(e) => { e.stopPropagation(); onQuantityChange?.(food, quantity + stepValue); }}
               aria-label={`Aumenta quantità di ${food.displayName}`}
               disabled={disabled}
             >
               +
             </button>
           </div>
+        )}
+
+        {showUnitSelector && onUnitChange && (
+          <select
+            className="unit-selector"
+            value={unitDefault}
+            onChange={(e) => onUnitChange(food, e.target.value)}
+            disabled={disabled}
+            aria-label={`Unità per ${food.displayName}`}
+          >
+            {UNIT_OPTIONS.map((unit) => (
+              <option key={unit} value={unit}>{unit}</option>
+            ))}
+          </select>
         )}
 
         <button
