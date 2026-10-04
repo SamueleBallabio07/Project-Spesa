@@ -14,6 +14,12 @@ export function useStepper(initialQuantities = {}) {
     return 10;
   }, []);
 
+  const stepForUnit = useCallback((unit) => {
+    if (unit === 'pezzi') return 1;
+    if (unit === 'kg') return 0.1;
+    return 10;
+  }, []);
+
   const initialQty = useCallback((food) => {
     if (picked[food.fdcId] !== undefined) return picked[food.fdcId];
     if (food.unitDefault === 'kg') return 0.5;
@@ -28,14 +34,21 @@ export function useStepper(initialQuantities = {}) {
     }
     
     const currentUnit = unitSelections[food.fdcId] || food.unitDefault;
-    const step = stepFor({ ...food, unitDefault: currentUnit });
+    const step = currentUnit === 'pezzi' ? 1 : currentUnit === 'kg' ? 0.1 : 10;
     const value = Math.max(step, Number(next) || step);
     const rounded = Math.round(value * 100) / 100;
     setPicked((prev) => ({ ...prev, [food.fdcId]: rounded }));
-  }, [stepFor]);
+  }, []);
 
   const getCurrentUnit = useCallback((food) => {
     return unitSelections[food.fdcId] || food.unitDefault;
+  }, []);
+
+  const getStepForCurrentUnit = useCallback((food) => {
+    const unit = unitSelections[food.fdcId] || food.unitDefault;
+    if (unit === 'pezzi') return 1;
+    if (unit === 'kg') return 0.1;
+    return 10;
   }, []);
 
   const resetQty = useCallback((fdcId) => {
@@ -63,6 +76,7 @@ export function useStepper(initialQuantities = {}) {
     initialQty,
     pickQty,
     getCurrentUnit,
+    getStepForCurrentUnit,
     resetQty,
     clearAll,
   };

@@ -42,7 +42,7 @@ export default function ShoppingList({
   const [catalogQuery, setCatalogQuery] = useState('');
   const [catalogResults, setCatalogResults] = useState([]);
 
-  const { picked, stepFor, initialQty, pickQty, clearAll } = useStepper();
+  const { picked, stepFor, initialQty, pickQty, clearAll, getCurrentUnit, getStepForCurrentUnit } = useStepper();
 
   // Ricerca catalogo inline
   useEffect(() => {
@@ -201,7 +201,8 @@ export default function ShoppingList({
                       food={food}
                       quantity={picked[food.fdcId] ?? initialQty(food)}
                       unitDefault={food.unitDefault}
-                      step={stepFor(food)}
+                      currentUnit={getCurrentUnit(food)}
+                      step={getStepForCurrentUnit(food)}
                       onQuantityChange={pickQty}
                       onUnitChange={(food, unit) => pickQty(food, picked[food.fdcId] ?? initialQty(food), unit)}
                       onAdd={handleCatalogAdd}

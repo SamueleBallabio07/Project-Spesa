@@ -13,6 +13,7 @@ export function FoodCard({
   food,
   quantity,
   unitDefault,
+  currentUnit,
   step,
   onQuantityChange,
   onUnitChange,
@@ -24,11 +25,8 @@ export function FoodCard({
   variant = 'catalog', // 'search' | 'catalog' | 'list-item'
 }) {
   const nutrition = nutritionFor(food, quantity, unitDefault);
-  const stepValue = step ?? (unitDefault === 'pezzi' ? 1 : unitDefault === 'kg' ? 0.1 : 10);
-
-  // Determina se mostrare stepper o selettore unità
-  const showStepper = variant === 'catalog' || variant === 'list-item';
-  const showUnitSelector = variant === 'search';
+  const effectiveUnit = currentUnit || unitDefault;
+  const stepValue = step ?? (currentUnit === 'pezzi' ? 1 : currentUnit === 'kg' ? 0.1 : 10);
 
   return (
     <li key={food.fdcId} className="food">
