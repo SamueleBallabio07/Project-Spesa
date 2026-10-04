@@ -28,6 +28,10 @@ export function FoodCard({
   const effectiveUnit = currentUnit || unitDefault;
   const stepValue = step ?? (currentUnit === 'pezzi' ? 1 : currentUnit === 'kg' ? 0.1 : 10);
 
+  // Determina se mostrare stepper o selettore unità
+  const showStepper = variant === 'catalog' || variant === 'list-item';
+  const showUnitSelector = variant === 'search';
+
   return (
     <li key={food.fdcId} className="food">
       <div className="food-head">
