@@ -258,12 +258,6 @@ export default function ShoppingList({
                               type="button"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                e.preventDefault();
-                                onUpdateItem(item.id, { quantity: Math.max(1, item.quantity - 1) });
-                              }}
-                              onTouchStart={(e) => {
-                                e.stopPropagation();
-                                e.preventDefault();
                                 onUpdateItem(item.id, { quantity: Math.max(1, item.quantity - 1) });
                               }}
                               aria-label={`Diminuisci quantità di ${item.name}`}
@@ -278,12 +272,6 @@ export default function ShoppingList({
                               type="button"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                e.preventDefault();
-                                onUpdateItem(item.id, { quantity: item.quantity + 1 });
-                              }}
-                              onTouchStart={(e) => {
-                                e.stopPropagation();
-                                e.preventDefault();
                                 onUpdateItem(item.id, { quantity: item.quantity + 1 });
                               }}
                               aria-label={`Aumenta quantità di ${item.name}`}

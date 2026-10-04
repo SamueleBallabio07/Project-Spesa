@@ -309,11 +309,19 @@ export function useShoppingList(session, ensureProfile) {
 
   const updateItem = useCallback(
     async (id, updates) => {
-      if (!supabase || !selectedListId) return false;
+      if (!supabase || !selectedListId) {
+        console.warn('updateItem: missing supabase or selectedListId');
+        return false;
+      }
 
       // Optimistic update
       const previousItem = items.find((entry) => entry.id === id);
-      if (!previousItem) return false;
+      if (!previousItem) {
+        console.warn('updateItem: item not found', id);
+        return false;
+      }
+
+      console.log('updateItem: updating', id, updates);
 
       setItems((current) =>
         current.map((entry) => (entry.id === id ? { ...entry, ...updates } : entry))
@@ -325,11 +333,16 @@ export function useShoppingList(session, ensureProfile) {
           .update(updates)
           .eq(COLUMNS.SHOPPING_ITEMS.ID, id);
 
-        if (updateError) throw updateError;
+        if (updateError) {
+          console.error('updateItem: Supabase error', updateError);
+          throw updateError;
+        }
+        console.log('updateItem: success', id);
         setError('');
         return true;
       } catch (err) {
         // Rollback
+        console.error('updateItem: error', err);
         if (previousItem) {
           setItems((current) =>
             current.map((entry) => (entry.id === id ? previousItem : entry))
