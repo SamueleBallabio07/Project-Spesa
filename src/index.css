@@ -1009,6 +1009,8 @@ select.field-input {
   gap: 12px;
   padding: 8px var(--pad);
   min-height: 56px;
+  position: relative;
+  z-index: 1;
 }
 
 .check {
@@ -1093,11 +1095,12 @@ select.field-input {
   box-shadow: var(--shadow-1);
   transition: background 0.15s ease, color 0.15s ease, transform 0.12s ease;
   pointer-events: auto;
-  z-index: 10;
+  z-index: 20;
   cursor: pointer;
   touch-action: manipulation;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
+  position: relative;
 }
 
 .item-quantity .stepper button:active {
