@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { TABLES, COLUMNS } from '../lib/schema';
 
@@ -39,6 +39,15 @@ export function useShoppingList(session, ensureProfile) {
   const [selectedListId, setSelectedListId] = useState(null);
   const [loadingItems, setLoadingItems] = useState(true);
   const [error, setError] = useState('');
+
+  // Le callback di mutazione leggono `items` solo per lo snapshot di rollback,
+  // ma non possono dipenderne: `items` cambia a ogni refetch e le ricreerebbe
+  // di continuo. Il ref mantiene l'ultimo valore senza chiuderlo in uno
+  // snapshot stale, che faceva fallire ogni update (find() su [] = undefined).
+  const itemsRef = useRef(items);
+  useEffect(() => {
+    itemsRef.current = items;
+  }, [items]);
 
   const summary = useMemo(() => {
     const total = items.length;
@@ -254,7 +263,7 @@ export function useShoppingList(session, ensureProfile) {
 
   const toggleItem = useCallback(
     async (id) => {
-      const item = items.find((entry) => entry.id === id);
+      const item = itemsRef.current.find((entry) => entry.id === id);
       if (!item || !supabase || !selectedListId) return;
 
       // Optimistic update
@@ -286,7 +295,7 @@ export function useShoppingList(session, ensureProfile) {
       if (!supabase || !selectedListId) return;
 
       // Optimistic update - salva item per rollback
-      const itemToRemove = items.find((entry) => entry.id === id);
+      const itemToRemove = itemsRef.current.find((entry) => entry.id === id);
       setItems((current) => current.filter((item) => item.id !== id));
 
       try {
@@ -309,19 +318,11 @@ export function useShoppingList(session, ensureProfile) {
 
   const updateItem = useCallback(
     async (id, updates) => {
-      if (!supabase || !selectedListId) {
-        console.warn('updateItem: missing supabase or selectedListId');
-        return false;
-      }
+      if (!supabase || !selectedListId) return false;
 
       // Optimistic update
-      const previousItem = items.find((entry) => entry.id === id);
-      if (!previousItem) {
-        console.warn('updateItem: item not found', id);
-        return false;
-      }
-
-      console.log('updateItem: updating', id, updates);
+      const previousItem = itemsRef.current.find((entry) => entry.id === id);
+      if (!previousItem) return false;
 
       setItems((current) =>
         current.map((entry) => (entry.id === id ? { ...entry, ...updates } : entry))
@@ -333,21 +334,14 @@ export function useShoppingList(session, ensureProfile) {
           .update(updates)
           .eq(COLUMNS.SHOPPING_ITEMS.ID, id);
 
-        if (updateError) {
-          console.error('updateItem: Supabase error', updateError);
-          throw updateError;
-        }
-        console.log('updateItem: success', id);
+        if (updateError) throw updateError;
         setError('');
         return true;
       } catch (err) {
         // Rollback
-        console.error('updateItem: error', err);
-        if (previousItem) {
-          setItems((current) =>
-            current.map((entry) => (entry.id === id ? previousItem : entry))
-          );
-        }
+        setItems((current) =>
+          current.map((entry) => (entry.id === id ? previousItem : entry))
+        );
         setError(err.message || 'Errore durante la modifica.');
         return false;
       }

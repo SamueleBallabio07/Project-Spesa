@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 /**
  * Hook per gestire lo stepper quantità nei prodotti.
@@ -8,17 +8,22 @@ export function useStepper(initialQuantities = {}) {
   const [picked, setPicked] = useState(initialQuantities);
   const [unitSelections, setUnitSelections] = useState({});
 
-  const stepFor = useCallback((food) => {
-    if (food.unitDefault === 'pezzi') return 1;
-    if (food.unitDefault === 'kg') return 0.1;
-    return 10;
-  }, []);
+  // Le unità scelte non possono stare fra le dipendenze delle callback, o ne
+  // ricreerebbero una per ogni selezione. Il ref espone l'ultimo valore senza
+  // congelare lo snapshot del primo render, che rendeva il passo dello
+  // stepper sempre quello dell'unità predefinita.
+  const unitSelectionsRef = useRef(unitSelections);
+  useEffect(() => {
+    unitSelectionsRef.current = unitSelections;
+  }, [unitSelections]);
 
   const stepForUnit = useCallback((unit) => {
     if (unit === 'pezzi') return 1;
     if (unit === 'kg') return 0.1;
     return 10;
   }, []);
+
+  const stepFor = useCallback((food) => stepForUnit(food.unitDefault), [stepForUnit]);
 
   const initialQty = useCallback((food) => {
     if (picked[food.fdcId] !== undefined) return picked[food.fdcId];
@@ -32,24 +37,24 @@ export function useStepper(initialQuantities = {}) {
     if (unit && unit !== food.unitDefault) {
       setUnitSelections((prev) => ({ ...prev, [food.fdcId]: unit }));
     }
-    
-    const currentUnit = unitSelections[food.fdcId] || food.unitDefault;
-    const step = currentUnit === 'pezzi' ? 1 : currentUnit === 'kg' ? 0.1 : 10;
+
+    // Appena scelta un'unità nuova, lo step va letto da quella scelta appena
+    // fatta: il ref non è ancora aggiornato.
+    const currentUnit = unit || unitSelectionsRef.current[food.fdcId] || food.unitDefault;
+    const step = stepForUnit(currentUnit);
     const value = Math.max(step, Number(next) || step);
     const rounded = Math.round(value * 100) / 100;
     setPicked((prev) => ({ ...prev, [food.fdcId]: rounded }));
-  }, []);
+  }, [stepForUnit]);
 
   const getCurrentUnit = useCallback((food) => {
-    return unitSelections[food.fdcId] || food.unitDefault;
+    return unitSelectionsRef.current[food.fdcId] || food.unitDefault;
   }, []);
 
   const getStepForCurrentUnit = useCallback((food) => {
-    const unit = unitSelections[food.fdcId] || food.unitDefault;
-    if (unit === 'pezzi') return 1;
-    if (unit === 'kg') return 0.1;
-    return 10;
-  }, []);
+    const unit = unitSelectionsRef.current[food.fdcId] || food.unitDefault;
+    return stepForUnit(unit);
+  }, [stepForUnit]);
 
   const resetQty = useCallback((fdcId) => {
     setPicked((prev) => {

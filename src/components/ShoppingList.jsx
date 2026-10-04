@@ -29,6 +29,7 @@ export default function ShoppingList({
   summary,
   onToggleItem,
   onRemoveItem,
+  onUpdateItem,
   onCreateList,
   onSwitchList,
   onDeleteList,
@@ -257,7 +258,6 @@ export default function ShoppingList({
                             <button
                               type="button"
                               onClick={(e) => {
-                                console.log('Stepper - click:', item.id, item.quantity);
                                 e.stopPropagation();
                                 onUpdateItem(item.id, { quantity: Math.max(1, item.quantity - 1) });
                               }}
@@ -272,7 +272,6 @@ export default function ShoppingList({
                             <button
                               type="button"
                               onClick={(e) => {
-                                console.log('Stepper + click:', item.id, item.quantity);
                                 e.stopPropagation();
                                 onUpdateItem(item.id, { quantity: item.quantity + 1 });
                               }}
