@@ -1,6 +1,6 @@
 import { nutritionFor, formatNutrition, formatMacros } from '../lib/nutrition';
 import { UnitPicker } from './UnitPicker';
-import { sizeLabelInItalian, stepForUnit, unitsFor } from '../lib/units';
+import { ALL_UNITS, sizeLabelInItalian, stepForUnit } from '../lib/units';
 
 /**
  * Card prodotto riutilizzabile per visualizzare alimenti del catalogo.
@@ -30,9 +30,7 @@ export function FoodCard({
   const nutrition = nutritionFor(food, quantity, effectiveUnit);
   const stepValue = step ?? stepForUnit(effectiveUnit);
 
-  // Un prodotto che si misura in un solo modo non ha un selettore da mostrare.
-  const unitChoices = unitsFor(food);
-  const showUnitSelector = variant === 'search' && unitChoices.length > 1;
+  const showUnitSelector = variant === 'search';
   const showStepper = variant === 'catalog' || variant === 'list-item';
 
   // Le descrizioni USDA sono per lo piu' in inglese e spesso lunghissime:
@@ -89,9 +87,10 @@ export function FoodCard({
 
         {showUnitSelector && onUnitChange && (
           <UnitPicker
-            units={unitChoices}
+            units={ALL_UNITS}
             value={effectiveUnit}
             quantity={quantity}
+            gramsPerUnit={food.gramsPerUnit}
             onChange={(nextQuantity, unit) => onUnitChange(food, nextQuantity, unit)}
             itemName={food.displayName}
             disabled={disabled}

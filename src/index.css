@@ -594,10 +594,15 @@ button {
 }
 
 /* ---------------- selettore unita' ---------------- */
+/* Pensato per il tocco: 44pt di altezza, nessuna dipendenza da :hover e
+   niente ritardo del tap. Su iOS Safari un :hover resta acceso dopo il tocco,
+   perche' il mouse non esiste: dentro @media (hover: hover) non viene
+   applicato. */
 .unit-picker {
   position: relative;
   flex: 0 0 auto;
   display: inline-flex;
+  touch-action: manipulation;
 }
 
 .unit-trigger {
@@ -607,30 +612,24 @@ button {
   border-radius: var(--radius-pill);
   background: var(--amber-light);
   color: var(--text);
+  font-family: inherit;
   font-size: var(--fs-base);
   font-weight: 600;
-  font-family: inherit;
   cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
   transition: background 0.15s ease;
-}
-
-.unit-trigger:hover {
-  background: var(--amber-light);
-  filter: brightness(0.97);
 }
 
 .unit-trigger.is-open {
   background: var(--amber);
 }
 
-/* Si apre verso l'alto: le card stanno in fondo allo schermo e sotto
-   finirebbero fuori viewport. */
 .unit-menu {
   position: absolute;
-  bottom: calc(100% + 6px);
   left: 0;
   z-index: 30;
-  min-width: 76px;
+  min-width: 88px;
   padding: 4px;
   margin: 0;
   list-style: none;
@@ -638,6 +637,17 @@ button {
   border: 1px solid var(--separator);
   border-radius: var(--radius-btn);
   box-shadow: var(--shadow-3);
+  /* Sotto compare l'ombra lunga di iOS, sul blur del materiale. */
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+}
+
+.unit-menu.is-up {
+  bottom: calc(100% + 6px);
+}
+
+.unit-menu.is-down {
+  top: calc(100% + 6px);
 }
 
 .unit-option {
@@ -650,20 +660,28 @@ button {
   border-radius: 8px;
   background: transparent;
   color: var(--text);
+  font-family: inherit;
   font-size: var(--fs-base);
   font-weight: 500;
-  font-family: inherit;
   cursor: pointer;
-}
-
-.unit-option:hover {
-  background: var(--separator);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .unit-option.is-active {
   background: var(--amber-light);
   color: var(--text);
   font-weight: 700;
+}
+
+@media (hover: hover) {
+  .unit-trigger:hover {
+    filter: brightness(0.97);
+  }
+
+  .unit-option:not(.is-active):hover {
+    background: var(--separator);
+  }
 }
 
 .food-add-btn {

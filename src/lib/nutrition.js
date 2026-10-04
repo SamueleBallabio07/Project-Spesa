@@ -2,14 +2,21 @@
 // Convenzione: i valori del catalogo sono sempre per 100g, quindi
 // convertiamo prima la quantita' scelta in grammi.
 
-const WEIGHT_UNITS = {
+/**
+ * Grammi per unita' di peso e volume.
+ *
+ * ml e l valgono come i grammi: densita' approssimata all'acqua, come fa la
+ * cucina quando versa "un bicchiere d'acqua". E' anche la scelta che regge la
+ * nutrizione, quindi il selettore unita' non puo'Usare una tabella diversa.
+ */
+export const GRAMS_PER_UNIT = {
   g: 1,
   kg: 1000,
   ml: 1, // densita' approssimata all'acqua
   l: 1000,
 };
 
-const isWeightUnit = (unit) => Object.prototype.hasOwnProperty.call(WEIGHT_UNITS, unit);
+const isWeightUnit = (unit) => Object.prototype.hasOwnProperty.call(GRAMS_PER_UNIT, unit);
 
 /**
  * Converte (quantita', unita') in grammi.
@@ -19,7 +26,7 @@ const isWeightUnit = (unit) => Object.prototype.hasOwnProperty.call(WEIGHT_UNITS
 export function toGrams(quantity, unit, gramsPerUnit) {
   const qty = Number(quantity) || 0;
 
-  if (isWeightUnit(unit)) return qty * WEIGHT_UNITS[unit];
+  if (isWeightUnit(unit)) return qty * GRAMS_PER_UNIT[unit];
 
   if (Number.isFinite(Number(gramsPerUnit)) && gramsPerUnit !== null) {
     return qty * Number(gramsPerUnit);

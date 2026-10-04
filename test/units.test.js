@@ -8,38 +8,27 @@
 
 import { describe, expect, it } from 'vitest';
 import {
+  ALL_UNITS,
   convertQuantity,
   sizeLabelInItalian,
   stepForUnit,
-  unitsFor,
 } from '../src/lib/units';
 
-describe('unitsFor', () => {
-  it('a un peso offre grammi e chilogrammi', () => {
-    expect(unitsFor({ unitDefault: 'g' })).toEqual(['g', 'kg']);
-    expect(unitsFor({ unitDefault: 'kg' })).toEqual(['kg', 'g']);
+describe('ALL_UNITS', () => {
+  it('offre g, kg, ml, l e pezzi', () => {
+    expect(ALL_UNITS).toEqual(['g', 'kg', 'ml', 'l', 'pezzi']);
   });
 
-  it('a un liquido offre millilitri e litri', () => {
-    expect(unitsFor({ unitDefault: 'ml' })).toEqual(['ml', 'l']);
-    expect(unitsFor({ unitDefault: 'l' })).toEqual(['l', 'ml']);
-  });
-
-  it('a un countable non offre alternative', () => {
-    // "uova in kg" non e' una spesa che si fa.
-    expect(unitsFor({ unitDefault: 'pezzi' })).toEqual(['pezzi']);
-  });
-
-  it('non lascia mai un prodotto senza unita\'', () => {
-    expect(unitsFor({})).toHaveLength(1);
-    expect(unitsFor({ unitDefault: '' })).toHaveLength(1);
-    expect(unitsFor(undefined)).toHaveLength(1);
-  });
-
-  it("l'unita' predefinita resta fra le offerte", () => {
-    for (const unit of ['g', 'kg', 'ml', 'l', 'pezzi']) {
-      expect(unitsFor({ unitDefault: unit })).toContain(unit);
+  it('non contiene unita\' inesistenti', () => {
+    // "buste" e "scatole" esistono in schema.js per l'inserimento manuale, ma
+    // non sono unita' del catalogo.
+    for (const unit of ALL_UNITS) {
+      expect(['buste', 'scatole']).not.toContain(unit);
     }
+  });
+
+  it('non ha duplicati', () => {
+    expect(new Set(ALL_UNITS).size).toBe(ALL_UNITS.length);
   });
 });
 
@@ -71,12 +60,33 @@ describe('convertQuantity', () => {
     expect(convertQuantity(300, 'g', 'g')).toBe(300);
   });
 
-  it('rifiuta le conversioni impossibili', () => {
-    // pezzi non sono convertibili in grammi senza sapere quanto pesa
-    // ciascuno.
+  it('converte pezzi in grammi quando si sa quanto pesa ciascuno', () => {
+    // 6 uova da 44 g sono 264 g.
+    expect(convertQuantity(6, 'pezzi', 'g', 44)).toBe(264);
+    expect(convertQuantity(6, 'pezzi', 'kg', 44)).toBe(0.26);
+  });
+
+  it('converte i grammi in pezzi con lo stesso dato', () => {
+    expect(convertQuantity(264, 'g', 'pezzi', 44)).toBe(6);
+    expect(convertQuantity(132, 'g', 'pezzi', 44)).toBe(3);
+  });
+
+  it('incrocia pesi e volumi con la densita\' all\'acqua', () => {
+    // La stessa approssimazione che regge la nutrizione: 500 ml ~ 500 g.
+    expect(convertQuantity(500, 'ml', 'g')).toBe(500);
+    expect(convertQuantity(2, 'l', 'g')).toBe(2000);
+    expect(convertQuantity(1, 'kg', 'ml')).toBe(1000);
+  });
+
+  it('rifiuta la conversione in pezzi senza il peso del singolo pezzo', () => {
     expect(convertQuantity(2, 'pezzi', 'kg')).toBeNull();
     expect(convertQuantity(100, 'g', 'pezzi')).toBeNull();
+    expect(convertQuantity(100, 'g', 'pezzi', 0)).toBeNull();
+  });
+
+  it('rifiuta unita\' inesistenti', () => {
     expect(convertQuantity(100, 'g', 'buste')).toBeNull();
+    expect(convertQuantity(100, 'buste', 'g')).toBeNull();
   });
 
   it('rifiuta una quantita\' che non e\' un numero', () => {
