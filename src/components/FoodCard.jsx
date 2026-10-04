@@ -60,7 +60,6 @@ export function FoodCard({
             <button
               type="button"
               onClick={() => onQuantityChange?.(food, quantity - stepValue)}
-              onTouchStart={(e) => { e.stopPropagation(); onQuantityChange?.(food, quantity - stepValue); }}
               aria-label={`Diminuisci quantità di ${food.displayName}`}
               disabled={disabled}
             >
@@ -73,7 +72,6 @@ export function FoodCard({
             <button
               type="button"
               onClick={(e) => { e.stopPropagation(); onQuantityChange?.(food, quantity + stepValue); }}
-              onTouchStart={(e) => { e.stopPropagation(); onQuantityChange?.(food, quantity + stepValue); }}
               aria-label={`Aumenta quantità di ${food.displayName}`}
               disabled={disabled}
             >
