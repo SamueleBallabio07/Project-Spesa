@@ -62,17 +62,6 @@ describe('copertura RLS', () => {
     expect(sospette).toEqual([]);
   });
 
-  it('le policy di iscrizione controllano anche la proprieta della lista', () => {
-    // WITH CHECK (user_id = auth.uid()) da solo permette di iscriversi a una
-    // lista altrui: basta mandare il proprio id con il list_id della vittima.
-    const insert = sql.match(
-      /CREATE POLICY "Users can insert memberships"[\s\S]*?;/i
-    )?.[0];
-
-    expect(insert).toMatch(/user_id\s*=\s*auth\.uid\(\)/);
-    expect(insert).toMatch(/list_id\s+IN\s*\(\s*SELECT\s+id\s+FROM\s+shopping_lists\s+WHERE\s+owner_id\s*=\s*auth\.uid\(\)\s*\)/);
-  });
-
   it('ogni policy di storage.objects controlla la cartella dell utente', () => {
     const storage = [...sql.matchAll(
       /CREATE POLICY "[^"]+"\s+ON storage\.objects[\s\S]*?;/gi

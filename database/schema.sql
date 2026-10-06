@@ -50,8 +50,8 @@ CREATE TABLE IF NOT EXISTS shopping_items (
 -- Il vincolo UNIQUE (user_id, name) sta in un ALTER TABLE separato, non dentro
 -- la CREATE TABLE: con IF NOT EXISTS la tabella viene saltata se esiste gia'
 -- e un vincolo dichiarato li dentro non arriverebbe mai al database.
--- L'app usa upsert con onConstraint su questa coppia: senza il vincolo ogni
--- salvataggio fallisce. Vedi anche database/fix-unique.sql.
+-- Il blocco DO $$ qui sotto applica il vincolo anche su una tabella gia'
+-- esistente, quindi non serve un file di riparazione separato.
 CREATE TABLE IF NOT EXISTS saved_products (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -80,37 +80,6 @@ BEGIN
   END IF;
 END $$;
 
--- Membri della lista (condivisione)
-CREATE TABLE IF NOT EXISTS list_memberships (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  list_id UUID NOT NULL REFERENCES shopping_lists(id) ON DELETE CASCADE,
-  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  role TEXT DEFAULT 'viewer',
-  joined_at TIMESTAMPTZ DEFAULT now(),
-  UNIQUE(list_id, user_id)
-);
-
--- Inviti alla lista
-CREATE TABLE IF NOT EXISTS list_invitations (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  list_id UUID NOT NULL REFERENCES shopping_lists(id) ON DELETE CASCADE,
-  email TEXT NOT NULL,
-  invited_by UUID REFERENCES auth.users(id),
-  status TEXT DEFAULT 'pending',
-  created_at TIMESTAMPTZ DEFAULT now()
-);
-
--- Storico modifiche prodotti
-CREATE TABLE IF NOT EXISTS shopping_items_history (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  item_id UUID REFERENCES shopping_items(id) ON DELETE SET NULL,
-  changed_by UUID REFERENCES auth.users(id),
-  action TEXT NOT NULL,
-  old_value JSONB,
-  new_value JSONB,
-  created_at TIMESTAMPTZ DEFAULT now()
-);
-
 -- ============================================
 -- INDICI
 -- ============================================
@@ -118,10 +87,6 @@ CREATE TABLE IF NOT EXISTS shopping_items_history (
 CREATE INDEX IF NOT EXISTS idx_shopping_lists_owner ON shopping_lists(owner_id);
 CREATE INDEX IF NOT EXISTS idx_shopping_items_list ON shopping_items(list_id);
 CREATE INDEX IF NOT EXISTS idx_shopping_items_bought ON shopping_items(bought);
-CREATE INDEX IF NOT EXISTS idx_list_memberships_list ON list_memberships(list_id);
-CREATE INDEX IF NOT EXISTS idx_list_memberships_user ON list_memberships(user_id);
-CREATE INDEX IF NOT EXISTS idx_list_invitations_list ON list_invitations(list_id);
-CREATE INDEX IF NOT EXISTS idx_shopping_items_history_item ON shopping_items_history(item_id);
 
 -- ============================================
 -- ROW LEVEL SECURITY
@@ -131,9 +96,6 @@ ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE shopping_lists ENABLE ROW LEVEL SECURITY;
 ALTER TABLE shopping_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE saved_products ENABLE ROW LEVEL SECURITY;
-ALTER TABLE list_memberships ENABLE ROW LEVEL SECURITY;
-ALTER TABLE list_invitations ENABLE ROW LEVEL SECURITY;
-ALTER TABLE shopping_items_history ENABLE ROW LEVEL SECURITY;
 
 -- Policies per profiles
 DROP POLICY IF EXISTS "Users can insert own profile" ON profiles;
@@ -209,52 +171,6 @@ DROP POLICY IF EXISTS "Users can delete own saved products" ON saved_products;
 CREATE POLICY "Users can delete own saved products" ON saved_products
   FOR DELETE TO authenticated USING (user_id = auth.uid());
 
--- Policies per list_memberships
-DROP POLICY IF EXISTS "Users can read memberships" ON list_memberships;
-CREATE POLICY "Users can read memberships" ON list_memberships
-  FOR SELECT TO authenticated USING (user_id = auth.uid());
-
--- INSERT: controlla sia il proprio user_id sia la proprieta' della lista.
--- Con il solo user_id = auth.uid() un utente qualsiasi poteva iscriversi a una
--- lista altrui inserendo una riga con il proprio id e il list_id della vittima.
-DROP POLICY IF EXISTS "Users can insert memberships" ON list_memberships;
-CREATE POLICY "Users can insert memberships" ON list_memberships
-  FOR INSERT TO authenticated WITH CHECK (
-    user_id = auth.uid() AND
-    list_id IN (SELECT id FROM shopping_lists WHERE owner_id = auth.uid())
-  );
-
-DROP POLICY IF EXISTS "Users can delete memberships" ON list_memberships;
-CREATE POLICY "Users can delete memberships" ON list_memberships
-  FOR DELETE TO authenticated USING (user_id = auth.uid());
-
--- Policies per list_invitations
-DROP POLICY IF EXISTS "Users can read invitations" ON list_invitations;
-CREATE POLICY "Users can read invitations" ON list_invitations
-  FOR SELECT TO authenticated USING (
-    invited_by = auth.uid() OR
-    list_id IN (SELECT id FROM shopping_lists WHERE owner_id = auth.uid())
-  );
-
-DROP POLICY IF EXISTS "Users can insert invitations" ON list_invitations;
-CREATE POLICY "Users can insert invitations" ON list_invitations
-  FOR INSERT TO authenticated WITH CHECK (
-    invited_by = auth.uid()
-  );
-
-DROP POLICY IF EXISTS "Users can update invitations" ON list_invitations;
-CREATE POLICY "Users can update invitations" ON list_invitations
-  FOR UPDATE TO authenticated USING (
-    invited_by = auth.uid()
-  );
-
--- Policies per shopping_items_history
-DROP POLICY IF EXISTS "Users can read history" ON shopping_items_history;
-CREATE POLICY "Users can read history" ON shopping_items_history
-  FOR SELECT TO authenticated USING (
-    item_id IN (SELECT id FROM shopping_items WHERE list_id IN (SELECT id FROM shopping_lists WHERE owner_id = auth.uid()))
-  );
-
 -- ============================================
 -- TRIGGER per aggiornare created_at
 -- ============================================
@@ -280,21 +196,6 @@ CREATE TRIGGER set_created_at
 DROP TRIGGER IF EXISTS set_created_at ON shopping_items;
 CREATE TRIGGER set_created_at
   BEFORE INSERT ON shopping_items
-  FOR EACH ROW EXECUTE FUNCTION update_created_at();
-
-DROP TRIGGER IF EXISTS set_created_at ON list_memberships;
-CREATE TRIGGER set_created_at
-  BEFORE INSERT ON list_memberships
-  FOR EACH ROW EXECUTE FUNCTION update_created_at();
-
-DROP TRIGGER IF EXISTS set_created_at ON list_invitations;
-CREATE TRIGGER set_created_at
-  BEFORE INSERT ON list_invitations
-  FOR EACH ROW EXECUTE FUNCTION update_created_at();
-
-DROP TRIGGER IF EXISTS set_created_at ON shopping_items_history;
-CREATE TRIGGER set_created_at
-  BEFORE INSERT ON shopping_items_history
   FOR EACH ROW EXECUTE FUNCTION update_created_at();
 
 -- ============================================
@@ -326,7 +227,235 @@ CREATE POLICY "Users can delete avatars" ON storage.objects
   FOR DELETE TO authenticated USING (bucket_id = 'avatars' AND (storage.foldername(name))[1] = auth.uid()::text);
 
 -- ============================================
+-- RPC FUNCTIONS per operazioni complesse
+-- ============================================
+
+-- RPC: add_or_update_item
+-- Gestisce in un'unica query atomica:
+-- 1. Se esiste nella stessa lista -> incrementa quantità
+-- 2. Se esiste in altra lista -> duplica con valori nutrizionali
+-- 3. Altrimenti -> crea nuovo
+-- Ritorna: { item_id, action: 'updated' | 'duplicated' | 'created' }
+-- ============================================
+
+CREATE OR REPLACE FUNCTION add_or_update_item(
+  p_list_id UUID,
+  p_name TEXT,
+  p_quantity NUMERIC,
+  p_unit TEXT,
+  p_category TEXT,
+  p_notes TEXT,
+  p_user_id UUID,
+  p_kcal100g NUMERIC,
+  p_protein100g NUMERIC,
+  p_carbs100g NUMERIC,
+  p_fat100g NUMERIC,
+  p_fiber100g NUMERIC
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_clean_name TEXT := trim(p_name);
+  v_normalized_name TEXT := lower(trim(p_name));
+  v_user_list_ids UUID[];
+  v_same_list_item shopping_items%ROWTYPE;
+  v_existing_product shopping_items%ROWTYPE;
+  v_new_item shopping_items%ROWTYPE;
+  v_action TEXT;
+BEGIN
+  -- Validazione
+  IF v_clean_name = '' OR p_list_id IS NULL OR p_user_id IS NULL THEN
+    RETURN jsonb_build_object('error', 'Parametri mancanti');
+  END IF;
+
+  -- Verifica che la lista appartenga all'utente
+  IF NOT EXISTS (
+    SELECT 1 FROM shopping_lists 
+    WHERE id = p_list_id AND owner_id = p_user_id
+  ) THEN
+    RETURN jsonb_build_object('error', 'Lista non trovata o non autorizzata');
+  END IF;
+
+  -- Ottieni tutte le liste dell'utente
+  SELECT array_agg(id) INTO v_user_list_ids
+  FROM shopping_lists
+  WHERE owner_id = p_user_id;
+
+  -- 1. Cerca nella STESSA lista (priorità: aggiorna quantità)
+  SELECT * INTO v_same_list_item
+  FROM shopping_items
+  WHERE list_id = p_list_id
+    AND lower(name) = v_normalized_name
+  LIMIT 1;
+
+  IF FOUND THEN
+    -- Aggiorna quantità
+    UPDATE shopping_items
+    SET quantity = quantity + COALESCE(p_quantity, 1)
+    WHERE id = v_same_list_item.id
+    RETURNING * INTO v_new_item;
+
+    RETURN jsonb_build_object(
+      'item_id', v_new_item.id,
+      'action', 'updated',
+      'quantity', v_new_item.quantity
+    );
+  END IF;
+
+  -- 2. Cerca in ALTRE liste dell'utente (duplica con valori nutrizionali)
+  SELECT * INTO v_existing_product
+  FROM shopping_items
+  WHERE list_id IN (SELECT unnest(v_user_list_ids))
+    AND list_id != p_list_id
+    AND lower(name) = v_normalized_name
+  LIMIT 1;
+
+  IF FOUND THEN
+    -- Duplica copiando valori nutrizionali
+    INSERT INTO shopping_items (
+      list_id, name, quantity, unit, bought, category, notes,
+      kcal100g, protein100g, carbs100g, fat100g, fiber100g,
+      created_by
+    ) VALUES (
+      p_list_id,
+      v_existing_product.name,
+      COALESCE(p_quantity, 1),
+      v_existing_product.unit,
+      false,
+      v_existing_product.category,
+      v_existing_product.notes,
+      v_existing_product.kcal100g,
+      v_existing_product.protein100g,
+      v_existing_product.carbs100g,
+      v_existing_product.fat100g,
+      v_existing_product.fiber100g,
+      p_user_id
+    )
+    RETURNING * INTO v_new_item;
+
+    RETURN jsonb_build_object(
+      'item_id', v_new_item.id,
+      'action', 'duplicated',
+      'quantity', v_new_item.quantity
+    );
+  END IF;
+
+  -- 3. Nuovo prodotto
+  INSERT INTO shopping_items (
+    list_id, name, quantity, unit, bought, category, notes,
+    kcal100g, protein100g, carbs100g, fat100g, fiber100g,
+    created_by
+  ) VALUES (
+    p_list_id,
+    v_clean_name,
+    COALESCE(p_quantity, 1),
+    COALESCE(p_unit, 'pezzi'),
+    false,
+    p_category,
+    p_notes,
+    p_kcal100g,
+    p_protein100g,
+    p_carbs100g,
+    p_fat100g,
+    p_fiber100g,
+    p_user_id
+  )
+  RETURNING * INTO v_new_item;
+
+  RETURN jsonb_build_object(
+    'item_id', v_new_item.id,
+    'action', 'created',
+    'quantity', v_new_item.quantity
+  );
+
+EXCEPTION
+  WHEN OTHERS THEN
+    RETURN jsonb_build_object('error', SQLERRM);
+END;
+$$;
+
+-- ============================================
+-- RPC: save_product_for_reuse
+-- Salva/aggiorna prodotto in saved_products con valori nutrizionali
+-- ============================================
+
+CREATE OR REPLACE FUNCTION save_product_for_reuse(
+  p_user_id UUID,
+  p_name TEXT,
+  p_quantity NUMERIC,
+  p_unit TEXT,
+  p_category TEXT,
+  p_notes TEXT,
+  p_kcal100g NUMERIC,
+  p_protein100g NUMERIC,
+  p_carbs100g NUMERIC,
+  p_fat100g NUMERIC,
+  p_fiber100g NUMERIC
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_clean_name TEXT := trim(p_name);
+  v_result saved_products%ROWTYPE;
+BEGIN
+  IF v_clean_name = '' OR p_user_id IS NULL THEN
+    RETURN jsonb_build_object('error', 'Parametri mancanti');
+  END IF;
+
+  INSERT INTO saved_products (
+    user_id, name, quantity, unit, category, notes,
+    kcal100g, protein100g, carbs100g, fat100g, fiber100g
+  ) VALUES (
+    p_user_id,
+    v_clean_name,
+    COALESCE(p_quantity, 1),
+    COALESCE(p_unit, 'pezzi'),
+    p_category,
+    p_notes,
+    p_kcal100g,
+    p_protein100g,
+    p_carbs100g,
+    p_fat100g,
+    p_fiber100g
+  )
+  ON CONFLICT (user_id, name) DO UPDATE SET
+    quantity = EXCLUDED.quantity,
+    unit = EXCLUDED.unit,
+    category = EXCLUDED.category,
+    notes = EXCLUDED.notes,
+    kcal100g = EXCLUDED.kcal100g,
+    protein100g = EXCLUDED.protein100g,
+    carbs100g = EXCLUDED.carbs100g,
+    fat100g = EXCLUDED.fat100g,
+    fiber100g = EXCLUDED.fiber100g
+  RETURNING * INTO v_result;
+
+  RETURN jsonb_build_object(
+    'id', v_result.id,
+    'saved', true
+  );
+
+EXCEPTION
+  WHEN OTHERS THEN
+    RETURN jsonb_build_object('error', SQLERRM);
+END;
+$$;
+
+-- ============================================
+-- GRANT per le funzioni
+-- ============================================
+
+GRANT EXECUTE ON FUNCTION add_or_update_item TO authenticated;
+GRANT EXECUTE ON FUNCTION save_product_for_reuse TO authenticated;
+
+-- ============================================
 -- MESSAGGIO FINALE
 -- ============================================
 
-SELECT 'Database schema creato con successo!' AS message;
+SELECT 'Schema e RPC functions create con successo!' AS message;

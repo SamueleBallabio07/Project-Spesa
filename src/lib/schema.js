@@ -8,9 +8,6 @@ export const TABLES = {
   SHOPPING_LISTS: 'shopping_lists',
   SHOPPING_ITEMS: 'shopping_items',
   SAVED_PRODUCTS: 'saved_products',
-  LIST_MEMBERSHIPS: 'list_memberships',
-  LIST_INVITATIONS: 'list_invitations',
-  SHOPPING_ITEMS_HISTORY: 'shopping_items_history',
 };
 
 export const COLUMNS = {
@@ -43,30 +40,6 @@ export const COLUMNS = {
     CARBS100G: 'carbs100g',
     FAT100G: 'fat100g',
     FIBER100G: 'fiber100g',
-  },
-  LIST_MEMBERSHIPS: {
-    ID: 'id',
-    LIST_ID: 'list_id',
-    USER_ID: 'user_id',
-    ROLE: 'role',
-    JOINED_AT: 'joined_at',
-  },
-  LIST_INVITATIONS: {
-    ID: 'id',
-    LIST_ID: 'list_id',
-    EMAIL: 'email',
-    INVITED_BY: 'invited_by',
-    STATUS: 'status',
-    CREATED_AT: 'created_at',
-  },
-  SHOPPING_ITEMS_HISTORY: {
-    ID: 'id',
-    ITEM_ID: 'item_id',
-    CHANGED_BY: 'changed_by',
-    ACTION: 'action',
-    OLD_VALUE: 'old_value',
-    NEW_VALUE: 'new_value',
-    CREATED_AT: 'created_at',
   },
   SAVED_PRODUCTS: {
     ID: 'id',
