@@ -8,7 +8,7 @@
     "build": "vite build",
     "build:catalog": "node scripts/build-catalog.mjs",
     "icons": "node scripts/make-icons.mjs",
-    "lint": "oxlint",
+    "lint": "oxlint --deny-warnings",
     "test": "vitest",
     "check": "npm run lint && npm test -- --run && npm run build",
     "preview": "vite preview"
@@ -16,8 +16,7 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.117.2",
     "react": "^19.2.8",
-    "react-dom": "^19.2.8",
-    "react-window": "^2.3.3"
+    "react-dom": "^19.2.8"
   },
   "devDependencies": {
     "@types/react": "^19.2.18",
