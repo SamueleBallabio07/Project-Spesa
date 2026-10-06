@@ -1396,19 +1396,12 @@ select.field-input {
   font-weight: 500;
 }
 
-.offline-banner,
-.sync-banner {
+.offline-banner {
   padding: 10px var(--pad);
   text-align: center;
   font-size: 14px;
   font-weight: 500;
-}
-.offline-banner {
   background: var(--amber);
-  color: var(--text-inverse);
-}
-.sync-banner {
-  background: var(--olive);
   color: var(--text-inverse);
 }
 

@@ -10,7 +10,6 @@ export function SearchBar({
   placeholder = 'Cerca…',
   ariaLabel = 'Cerca',
   autoFocus = false,
-  minLength = 2,
 }) {
   const inputRef = useRef(null);
 
@@ -19,8 +18,6 @@ export function SearchBar({
       inputRef.current.focus();
     }
   }, [autoFocus]);
-
-  const hasValue = value && value.trim().length >= minLength;
 
   return (
     <div className="searchbar">

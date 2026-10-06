@@ -3,7 +3,6 @@ import { useAuth } from './hooks/useAuth';
 import { useShoppingList } from './hooks/useShoppingList';
 import { useSavedProducts } from './hooks/useSavedProducts';
 import { useFoodCatalog } from './hooks/useFoodCatalog';
-import { useOfflineSync } from './hooks/useOfflineSync';
 import { useTheme } from './hooks/useTheme';
 import Auth from './components/Auth';
 import ShoppingList from './components/ShoppingList';
@@ -16,7 +15,21 @@ export default function App() {
   const list = useShoppingList(session, ensureProfile);
   const saved = useSavedProducts(session);
   const catalog = useFoodCatalog();
-  const { isOnline, pendingChanges, syncing } = useOfflineSync();
+
+  // Solo lo stato della rete, per l'avviso in alto. Le scritture passano da
+  // Supabase: se la rete manca falliscono e basta, non c'e' una coda che le
+  // riprende piu' tardi.
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  useEffect(() => {
+    const goOnline = () => setIsOnline(true);
+    const goOffline = () => setIsOnline(false);
+    window.addEventListener('online', goOnline);
+    window.addEventListener('offline', goOffline);
+    return () => {
+      window.removeEventListener('online', goOnline);
+      window.removeEventListener('offline', goOffline);
+    };
+  }, []);
 
   const [tab, setTab] = useState('lists');
 
@@ -59,13 +72,7 @@ export default function App() {
 
   return (
     <div className="app">
-      {!isOnline && (
-        <div className="offline-banner">
-          Sei offline
-          {pendingChanges > 0 ? ` · ${pendingChanges} modifiche da sincronizzare` : ''}
-        </div>
-      )}
-      {isOnline && syncing && <div className="sync-banner">Sincronizzazione…</div>}
+      {!isOnline && <div className="offline-banner">Sei offline</div>}
 
       <div className="screen-wrap">
         {tab === 'lists' ? (

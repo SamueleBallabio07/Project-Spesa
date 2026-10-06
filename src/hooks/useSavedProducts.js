@@ -40,6 +40,12 @@ export function useSavedProducts(session) {
   }, [session]);
 
   useEffect(() => {
+    // Il setState e' sincrono solo nel ramo senza sessione, dove serve a
+    // svuotare i prodotti dell'utente precedente: arriva da un sistema esterno
+    // (l'auth di Supabase) e senza azzerare, il nuovo utente vedrebbe per un
+    // istante quelli dell'altro. Con la sessione presente i setState vengono
+    // dopo un await e non provocano render a cascata.
+    // oxlint-disable-next-line react/set-state-in-effect
     fetchSavedProducts();
   }, [fetchSavedProducts]);
 

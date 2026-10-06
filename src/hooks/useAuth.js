@@ -4,18 +4,18 @@ import { TABLES, COLUMNS } from '../lib/schema';
 
 export function useAuth() {
   const [session, setSession] = useState(null);
-  const [loading, setLoading] = useState(true);
+  // Senza client Supabase non c'e' sessione da aspettare: partire gia' da
+  // "caricamento" costringerebbe a un render solo per poi accorgersi che non
+  // c'era niente da caricare.
+  const [loading, setLoading] = useState(() => Boolean(supabase));
 
   const hasSupabaseConfig = Boolean(
     import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY
   );
 
   useEffect(() => {
-    if (!supabase) {
-      setSession(null);
-      setLoading(false);
-      return;
-    }
+    // Niente client, niente sessione: lo stato iniziale lo dice gia'.
+    if (!supabase) return;
 
     const restoreSession = async () => {
       const { data } = await supabase.auth.getSession();

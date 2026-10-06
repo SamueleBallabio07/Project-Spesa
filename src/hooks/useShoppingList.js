@@ -77,6 +77,11 @@ export function useShoppingList(session, ensureProfile) {
 
   useEffect(() => {
     if (!supabase || !session) {
+      // Reset allo stato vuoto quando non c'e' sessione: l'evento arriva da
+      // un sistema esterno (l'auth di Supabase). Senza questo, il logout
+      // lascerebbe a schermo le liste dell'utente precedente fino al prossimo
+      // caricamento. Quando la sessione c'e', i setState vengono dopo un await.
+      // oxlint-disable-next-line react/set-state-in-effect
       setSelectedListId(null);
       setLists([]);
       setItems([]);
@@ -173,8 +178,6 @@ export function useShoppingList(session, ensureProfile) {
         setError('Non riesco a trovare la tua lista. Ricarica la pagina.');
         return false;
       }
-
-      const normalizedName = cleanName.toLowerCase();
 
       // OPTIMISTIC UPDATE: aggiungi subito alla UI
       const tempId = generateTempId();
@@ -446,7 +449,7 @@ export function useShoppingList(session, ensureProfile) {
         return false;
       }
     },
-    [session, selectedListId]
+    [session, selectedListId, lists]
   );
 
   return {

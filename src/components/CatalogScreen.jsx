@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useState, useCallback } from 'react';
-import { nutritionFor, formatNutrition, formatMacros } from '../lib/nutrition';
+import { useEffect, useMemo, useState } from 'react';
 import { ThemeToggle } from './ThemeToggle';
 import { SearchBar } from './SearchBar';
 import { EmptyState } from './EmptyState';
@@ -46,7 +45,7 @@ export default function CatalogScreen({
     fiber100g: '',
   });
 
-  const { picked, stepFor, initialQty, pickQty, clearAll } = useStepper();
+  const { stepFor, initialQty, pickQty } = useStepper();
 
   // Il catalogo si scarica solo quando apri questa scheda.
   useEffect(() => {
@@ -356,7 +355,6 @@ export default function CatalogScreen({
               <ul className="food-list">
                 {results.map((food) => {
                   const quantity = initialQty(food);
-                  const nutrition = nutritionFor(food, quantity, food.unitDefault);
                   const justAdded = Boolean(added[food.fdcId]);
                   const step = stepFor(food);
 

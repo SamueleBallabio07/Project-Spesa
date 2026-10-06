@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { ThemeToggle } from './ThemeToggle';
 import { SearchBar } from './SearchBar';
 import { FoodCard } from './FoodCard';
@@ -43,23 +43,28 @@ export default function ShoppingList({
   const [isCreatingList, setIsCreatingList] = useState(false);
   const [confirmDeleteList, setConfirmDeleteList] = useState(null);
   const [catalogQuery, setCatalogQuery] = useState('');
-  const [catalogResults, setCatalogResults] = useState([]);
   // Una riga per volta: due campi aperti insieme su uno schermo stretto
   // si coprirebbero, e non si sa quale dei due stai scrivendo.
   const [editingId, setEditingId] = useState(null);
 
-  const { picked, stepFor, initialQty, pickQty, clearAll, getCurrentUnit, getStepForCurrentUnit } = useStepper();
+  const { picked, initialQty, pickQty, clearAll, getCurrentUnit, getStepForCurrentUnit } = useStepper();
 
-  // Ricerca catalogo inline
-  useEffect(() => {
-    if (catalogQuery.trim().length >= 2 && catalogSearch) {
-      const results = catalogSearch(catalogQuery.trim());
-      setCatalogResults(results.slice(0, 10));
-    } else {
-      setCatalogResults([]);
-      clearAll();
-    }
-  }, [catalogQuery, catalogSearch, catalogSearch, clearAll]);
+  // Ricerca catalogo inline. I risultati sono derivati dalla query, non uno
+  // stato a se': si calcolano qui, durante il render, e non in un effect che
+  // dovrebbe poi triggersare un altro render per produrli.
+  const catalogResults = useMemo(() => {
+    const query = catalogQuery.trim();
+    if (query.length < 2 || !catalogSearch) return [];
+    return catalogSearch(query).slice(0, 10);
+  }, [catalogQuery, catalogSearch]);
+
+  // Sotto i 2 caratteri la ricerca non parte. Le quantità scelte sui prodotti
+  // che spariscono vanno azzerate anche quando l'utente arriva qui col backspace
+  // invece che col pulsante di cancellazione.
+  const handleCatalogQueryChange = (query) => {
+    setCatalogQuery(query);
+    if (query.trim().length < 2) clearAll();
+  };
 
   const handleCatalogAdd = async (food) => {
     if (!selectedListId || !onAddFood) return;
@@ -79,8 +84,8 @@ export default function ShoppingList({
       fiber100g: food.fiber100g,
     });
     if (ok) {
+      // Azzerare la query svuota anche i risultati: sono derivati da lei.
       setCatalogQuery('');
-      setCatalogResults([]);
       clearAll();
     }
   };
@@ -197,7 +202,7 @@ export default function ShoppingList({
               </div>
               <SearchBar
                 value={catalogQuery}
-                onChange={setCatalogQuery}
+                onChange={handleCatalogQueryChange}
                 onClear={() => { setCatalogQuery(''); clearAll(); }}
                 placeholder="Cerca nel catalogo (es. pane, latte, pomodoro…)…"
                 ariaLabel="Cerca nel catalogo alimentare"
