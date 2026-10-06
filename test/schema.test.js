@@ -1,12 +1,22 @@
 /**
- * Coerenza fra database/schema.sql, src/lib/schema.js e il codice che interroga
- * il database. Sono i contratti che rompono in silenzio: un errore li produce
- * solo in produzione, o peggio, una tabella senza RLS espone i dati.
+ * Coerenza fra i contratti del progetto: database/schema.sql e
+ * src/lib/schema.js da una parte, database/catalog-taxonomy.json e
+ * public/catalog.json dall'altra, e il codice che li interroga.
+ *
+ * Sono i contratti che rompono in silenzio: un errore li produce solo in
+ * produzione, o peggio, una tabella senza RLS espone i dati.
  */
 
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { CATEGORY_OPTIONS, COLUMNS, TABLES, UNIT_OPTIONS } from '../src/lib/schema.js';
+import { CATEGORY_OPTIONS, COLUMNS, DOMAIN_OPTIONS, TABLES, UNIT_OPTIONS } from '../src/lib/schema.js';
+
+const taxonomy = JSON.parse(
+  readFileSync(new URL('../database/catalog-taxonomy.json', import.meta.url), 'utf8')
+);
+const catalog = JSON.parse(
+  readFileSync(new URL('../public/catalog.json', import.meta.url), 'utf8')
+);
 
 const sql = readFileSync(new URL('../database/schema.sql', import.meta.url), 'utf8');
 const hooks = readFileSync(
@@ -170,7 +180,83 @@ describe('vincoli richiesti dal codice', () => {
   });
 });
 
+describe('il catalogo rispetta la distinzione food / house', () => {
+  const NUTRIENT_KEYS = ['kcal', 'p', 'c', 'f', 'fib'];
+  const foods = catalog.filter((r) => r.dom === 'food');
+  const house = catalog.filter((r) => r.dom === 'house');
+
+  it('il catalogo ha voci di entrambi i domini', () => {
+    expect(foods.length).toBeGreaterThan(0);
+    expect(house.length).toBeGreaterThan(0);
+  });
+
+  it('ogni voce ha un dominio noto', () => {
+    const noti = new Set(DOMAIN_OPTIONS.map((d) => d.id));
+    for (const row of catalog) {
+      expect(noti.has(row.dom)).toBe(true);
+    }
+  });
+
+  // L'invariante che regge tutta la UI: e' la nutrizione, non il dominio, a
+  // dire se mostrare le calorie. Se una voce house avesse calorie,
+  // l'app mostrerebbe valori inventati su un detersivo.
+  it('nessuna voce house ha valori nutrizionali', () => {
+    const colpevoli = [];
+    for (const row of house) {
+      for (const key of NUTRIENT_KEYS) {
+        if (row[key] !== null) colpevoli.push(`${row.name}.${key} = ${row[key]}`);
+      }
+      if (row.gpu !== null) colpevoli.push(`${row.name}.gpu = ${row.gpu}`);
+    }
+    expect(colpevoli).toEqual([]);
+  });
+
+  it('ogni voce food ha almeno le calorie per 100g', () => {
+    const senza = foods.filter((r) => r.kcal === null || r.kcal === undefined).map((r) => r.name);
+    expect(senza).toEqual([]);
+  });
+
+  it('la tassonomia house non porta campi nutrizionali', () => {
+    const colpevoli = [];
+    for (const [nome, v] of Object.entries(taxonomy.house)) {
+      for (const key of [...NUTRIENT_KEYS, 'gpu']) {
+        if (key in v) colpevoli.push(`${nome}.${key}`);
+      }
+    }
+    expect(colpevoli).toEqual([]);
+  });
+
+  it('ogni voce house della tassonomia arriva nel catalogo', () => {
+    const nelCatalogo = new Set(house.map((r) => r.name));
+    const mancanti = Object.keys(taxonomy.house).filter((n) => !nelCatalogo.has(n));
+    expect(mancanti).toEqual([]);
+  });
+
+  it('ogni voce house ha categoria e unita', () => {
+    for (const [nome, v] of Object.entries(taxonomy.house)) {
+      expect(typeof v.cat, `${nome} senza cat`).toBe('string');
+      expect(typeof v.unit, `${nome} senza unit`).toBe('string');
+    }
+  });
+
+  it('gli id sono unici: una voce non puo sostituirne unaltra', () => {
+    expect(catalog.length).toBe(new Set(catalog.map((r) => r.id)).size);
+  });
+
+  it('i nomi sono unici: due voci omonime confonderebbero i totali', () => {
+    expect(catalog.length).toBe(new Set(catalog.map((r) => r.name)).size);
+  });
+});
+
 describe('costanti di UI', () => {
+  it('i domini sono food e house, in quest ordine, con etichetta', () => {
+    expect(DOMAIN_OPTIONS.map((d) => d.id)).toEqual(['food', 'house']);
+    for (const d of DOMAIN_OPTIONS) {
+      expect(typeof d.label).toBe('string');
+      expect(d.label.length).toBeGreaterThan(0);
+    }
+  });
+
   it('le unita includono g, kg, ml e l, servite alla conversione', () => {
     for (const u of ['pezzi', 'kg', 'g', 'l', 'ml', 'buste', 'scatole']) {
       expect(UNIT_OPTIONS).toContain(u);

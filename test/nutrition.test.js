@@ -90,6 +90,32 @@ describe('nutritionFor', () => {
     expect(n.kcal).toBe(0);
     expect(Number.isNaN(n.kcal)).toBe(false);
   });
+
+  // I prodotti non commestibili (detersivi, carta) non hanno valori
+  // nutrizionali: il catalogo porta null al posto dei nutrienti.
+  it('restituisce null se il prodotto non ha nutrizione', () => {
+    const nonCommestibile = food({
+      gramsPerUnit: null,
+      kcal100g: null,
+      protein100g: null,
+      carbs100g: null,
+      fat100g: null,
+      fiber100g: null,
+    });
+    expect(nutritionFor(nonCommestibile, 2, 'pezzi')).toBeNull();
+  });
+
+  it('restituisce null anche se il prodotto ha valori ma sono null', () => {
+    // kcal100g null con gramsPerUnit valorizzato: senza questo controllo
+    // tornerebbe 0 kcal, cioe' "questo detersivo contiene zero calorie".
+    const strano = food({ gramsPerUnit: 1500, kcal100g: null });
+    expect(nutritionFor(strano, 2, 'pezzi')).toBeNull();
+  });
+
+  it('non confonde una nutrizione a zero con una nutrizione assente', () => {
+    // Acqua e sale valgono 0 kcal e devono restare mostrate come 0.
+    expect(nutritionFor(food({ kcal100g: 0 }), 200, 'g')).toMatchObject({ kcal: 0 });
+  });
 });
 
 describe('formatNutrition', () => {
