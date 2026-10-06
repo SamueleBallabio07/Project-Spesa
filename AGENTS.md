@@ -36,15 +36,30 @@ il perché accanto.
 
 ## Architettura
 
-- Il **catalogo alimentare non è nel database**. È `public/catalog.json`, un
-  file statico generato da `scripts/build-catalog.mjs` a partire da
-  `database/staples-queries.json` + `data/usda.json`. Nessuna tabella, nessuna
+- Il **catalogo non è nel database**. È `public/catalog.json`, un file statico
+  generato da `scripts/build-catalog.mjs` a partire da
+  `database/catalog-taxonomy.json` + `data/usda.json`. Nessuna tabella, nessuna
   query, nessuna chiave API.
 - **`public/catalog.json` è generato: non editarlo mai a mano.** Si rigenera
   con `npm run build:catalog` e si committa il risultato.
+- Il catalogo ha due domini, definiti in `DOMAIN_OPTIONS` (`src/lib/schema.js`):
+  - `food`: commestibili. La tassonomia li abina a una ricerca USDA e i valori
+    nutrizionali per 100g arrivano da `data/usda.json`
+  - `house`: prodotti non commestibili (detersivi, carta, igiene personale,
+    casalinghi, animali, ufficio, giardinaggio). Stanno nel blocco `house` di
+    `database/catalog-taxonomy.json`, portano `cat` e `unit`, e **nessun campo
+    nutrizionale**: `build-catalog.mjs` lo rifiuta se ne hanno.
+- **A decidere se mostrare le calorie è la presenza della nutrizione, non il
+  dominio.** `nutritionFor` restituisce `null` se `kcal100g` è `null`, e
+  `FoodCard` nasconde il pannello in quel caso. Non aggiungere un flag "mostra
+  calorie" letto dal dominio: una voce aggiunta a mano senza calorie non ha un
+  dominio, e deve restare senza calorie.
 - I valori nutrizionali sono **sempre per 100g** (convenzione USDA). La
   conversione in grammi avviene solo in `src/lib/nutrition.js`. Non introdurre
   valori "per porzione" in altri file.
+- Per aggiungere prodotti per casa basta una riga nel blocco `house` della
+  tassonomia, poi `npm run build:catalog`. L'invariante "house senza
+  nutrizione" è fissato in `test/schema.test.js`.
 - `src/lib/schema.js` deve corrispondere **esattamente** a `database/schema.sql`:
   nomi di tabelle e colonne. Modifiche allo schema si fanno su entrambi.
 - Il DB è Supabase e la sicurezza poggia **interamente sulle RLS**. Ogni
@@ -74,7 +89,7 @@ il perché accanto.
 - Non aggiungere dipendenze senza chiedere. Giustifica prima la necessità.
 - Non modificare `.github/workflows/` senza chiedere.
 - Non eliminare `data/usda.json`: è l'unico input di `npm run build:catalog`
-  insieme a `database/staples-queries.json`. I CSV USDA originali non sono
+  insieme a `database/catalog-taxonomy.json`. I CSV USDA originali non sono
   tracciati e non servono: se ti servono, si riscaricano dal sito dell'USDA.
 
 ## Git
