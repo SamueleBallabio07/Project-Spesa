@@ -204,8 +204,8 @@ export default function ShoppingList({
                 value={catalogQuery}
                 onChange={handleCatalogQueryChange}
                 onClear={() => { setCatalogQuery(''); clearAll(); }}
-                placeholder="Cerca nel catalogo (es. pane, latte, pomodoro…)…"
-                ariaLabel="Cerca nel catalogo alimentare"
+                placeholder="Cerca nel catalogo (es. pane, latte, detersivo…)…"
+                ariaLabel="Cerca nel catalogo"
               />
               {catalogQuery.trim().length >= 2 && catalogResults.length > 0 && (
                 <ul className="food-list">

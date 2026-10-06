@@ -466,6 +466,19 @@ button {
   color: var(--text-inverse);
 }
 
+/* Domini: due voci grandi che stanno su una riga tutta loro, sopra le
+   categorie. Senza flex: 1 finirebbero larghe quanto il testo e sembrerebbero
+   due chip qualsiasi. */
+.chip-domain {
+  flex: 1 1 0;
+  min-height: 40px;
+  font-size: 16px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 /* i figli non devono comprimersi: il contenitore è già scrollabile */
 .catalog > *,
 .content > * {

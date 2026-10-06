@@ -37,6 +37,12 @@ export function FoodCard({
   // solo le brevi tradotte meritano di finire nella lista.
   const sizeLabel = sizeLabelInItalian(food.sizeLabel);
 
+  // I prodotti non commestibili non hanno valori nutrizionali: il catalogo
+  // porta null. La decisione la prende il componente dai dati, non il
+  // chiamante: cosi' tutte e tre le varianti sono giuste senza che ognuno si
+  // ricordi di passare showNutrition={false}.
+  const hasNutrition = food.kcal100g !== null && food.kcal100g !== undefined;
+
   return (
     <li key={food.fdcId} className="food">
       <div className="food-head">
@@ -44,13 +50,15 @@ export function FoodCard({
           <span className="food-name">{food.displayName}</span>
           <span className="food-cat">{food.category}</span>
         </div>
-        <span className="food-kcal">
-          {food.kcal100g}
-          <small>kcal/100g</small>
-        </span>
+        {hasNutrition && (
+          <span className="food-kcal">
+            {food.kcal100g}
+            <small>kcal/100g</small>
+          </span>
+        )}
       </div>
 
-      {showMacros && (
+      {showMacros && hasNutrition && (
         <div className="food-macros">
           <span>P {food.protein100g}g</span>
           <span>C {food.carbs100g}g</span>
@@ -107,7 +115,7 @@ export function FoodCard({
         </button>
       </div>
 
-      {showNutrition && (
+      {showNutrition && hasNutrition && (
         <div className="food-nutrition">
           <span className="food-nutrition-main">
             {variant === 'catalog' && nutrition

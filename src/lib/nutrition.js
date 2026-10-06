@@ -37,9 +37,18 @@ export function toGrams(quantity, unit, gramsPerUnit) {
 
 /**
  * Nutrizioni per la quantita' scelta.
- * Restituisce null se non convertibile in grammi.
+ * Restituisce null se il prodotto non e' commestibile o non convertibile.
+ *
+ * I prodotti non commestibili (detersivi, carta, casalinghi) arrivano dal
+ * catalogo con kcal100g = null: per quelli non c'e' nutrizione da calcolare.
+ * Senza questo controllo tornerebbe 0 kcal, che e' una bug: non significa
+ * "zero calorie", significa "questo prodotto non ha calorie". Acqua e sale
+ * valgono davvero 0 e devono continuare a mostrarlo.
  */
 export function nutritionFor(food, quantity, unit) {
+  const kcal = food?.kcal100g;
+  if (kcal === null || kcal === undefined) return null;
+
   const grams = toGrams(quantity, unit, food.gramsPerUnit);
   if (grams === null) return null;
 

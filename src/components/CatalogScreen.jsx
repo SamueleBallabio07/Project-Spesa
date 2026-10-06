@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ThemeToggle } from './ThemeToggle';
+import { DOMAIN_OPTIONS } from '../lib/schema';
 import { SearchBar } from './SearchBar';
 import { EmptyState } from './EmptyState';
 import { useStepper } from '../hooks/useStepper';
@@ -23,13 +24,16 @@ export default function CatalogScreen({
   selectedListName,
   loading,
   error,
+  domains,
   categories,
+  categoriesByDomain,
   search,
   ensureLoaded,
   onAddFood,
 }) {
   const [query, setQuery] = useState('');
   const debouncedQuery = useDebounce(query, 300);
+  const [domain, setDomain] = useState('food');
   const [category, setCategory] = useState(ALL);
   const [added, setAdded] = useState({});
   const [showManual, setShowManual] = useState(false);
@@ -53,8 +57,8 @@ export default function CatalogScreen({
   }, [ensureLoaded]);
 
   const matches = useMemo(
-    () => search(debouncedQuery, category === ALL ? null : category),
-    [search, debouncedQuery, category]
+    () => search(debouncedQuery, category === ALL ? null : category, domain),
+    [search, debouncedQuery, category, domain]
   );
   const results = matches.slice(0, VISIBLE);
 
@@ -138,9 +142,32 @@ export default function CatalogScreen({
         value={query}
         onChange={setQuery}
         onClear={() => setQuery('')}
-        placeholder="Cerca un alimento…"
+        placeholder={domain === 'house' ? 'Cerca un prodotto per casa…' : 'Cerca un alimento…'}
         ariaLabel="Cerca nel catalogo"
       />
+
+      {/* Domini: due voci grandi, sotto le categorie del dominio scelto.
+          Senza questo i chip sarebbero 21 categorie piatte in una riga sola. */}
+      <div className="chips-scroll">
+        {domains.map((d) => {
+          const option = DOMAIN_OPTIONS.find((o) => o.id === d);
+          return (
+            <button
+              key={d}
+              type="button"
+              className={`chip chip-domain ${domain === d ? 'is-active' : ''}`}
+              onClick={() => {
+                setDomain(d);
+                // La categoria scelta appartiene al dominio precedente: tenerla
+                // lascerebbe la ricerca senza risultati.
+                setCategory(ALL);
+              }}
+            >
+              {option?.label ?? d}
+            </button>
+          );
+        })}
+      </div>
 
       <div className="chips-scroll">
         <button
@@ -150,7 +177,7 @@ export default function CatalogScreen({
         >
           Tutti
         </button>
-        {categories.map((cat) => (
+        {(categoriesByDomain[domain] ?? []).map((cat) => (
           <button
             key={cat}
             type="button"

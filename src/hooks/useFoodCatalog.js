@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { DOMAIN_OPTIONS } from '../lib/schema';
 
 const CATALOG_URL = '/catalog.json';
+
+const DOMAIN_ORDER = DOMAIN_OPTIONS.map((d) => d.id);
 
 const normalize = (row) => ({
   fdcId: row.id,
@@ -8,6 +11,9 @@ const normalize = (row) => ({
   shortName: row.sn,
   // in italiano appena curato, altrimenti il nome USDA
   displayName: row.sn || row.name,
+  // 'food' o 'house'. Serve a raggruppare la ricerca, non a decidere se
+  // mostrare le calorie: quello lo dice la presenza della nutrizione.
+  domain: row.dom === 'house' ? 'house' : 'food',
   category: row.cat,
   unitDefault: row.unit,
   gramsPerUnit: row.gpu,
@@ -59,9 +65,34 @@ export function useFoodCatalog() {
     }
   }, []);
 
+  // I due domini, nell'ordine in cui li mostra il selettore: prima il cibo,
+  // poi la casa. Ogni dominio ha le sue categorie, cosi' i chip non
+  // diventano un'unica lista piatta di 21 voci illeggibile.
+  const domains = useMemo(() => {
+    const present = new Set(foods.map((f) => f.domain));
+    return DOMAIN_ORDER.filter((d) => present.has(d));
+  }, [foods]);
+
+  // Tutte le categorie, piatte: le usa il form di aggiunta manuale, dove la
+  // voce puo' essere di qualsiasi tipo e non c'e' un dominio scelto.
   const categories = useMemo(() => {
     const unique = [...new Set(foods.map((f) => f.category))];
     return unique.sort((a, b) => a.localeCompare(b, 'en'));
+  }, [foods]);
+
+  // Categorie per dominio. Serve a mostrare solo le chip del dominio scelto:
+  // senza, sotto "Casa" comparirebbero anche Verdura e Latte e latticini.
+  const categoriesByDomain = useMemo(() => {
+    const byDomain = new Map(DOMAIN_ORDER.map((d) => [d, new Set()]));
+    for (const food of foods) {
+      byDomain.get(food.domain)?.add(food.category);
+    }
+    return Object.fromEntries(
+      [...byDomain].map(([domain, set]) => [
+        domain,
+        [...set].sort((a, b) => a.localeCompare(b, 'en')),
+      ])
+    );
   }, [foods]);
 
   // Indice pre-normalizzato, costruito una volta: cercare fra 7.500 righe
@@ -76,11 +107,12 @@ export function useFoodCatalog() {
   );
 
   const search = useCallback(
-    (query, category) => {
+    (query, category, domain) => {
       const q = normalizeText(query.trim());
 
       const matches = [];
       for (const { food, haystack } of index) {
+        if (domain && food.domain !== domain) continue;
         if (category && food.category !== category) continue;
         if (q && !haystack.includes(q)) continue;
         matches.push(food);
@@ -99,7 +131,9 @@ export function useFoodCatalog() {
 
   return {
     foods,
+    domains,
     categories,
+    categoriesByDomain,
     loading,
     error,
     search,

@@ -104,7 +104,9 @@ export default function App() {
             selectedListName={selectedList?.name}
             loading={catalog.loading}
             error={catalog.error}
+            domains={catalog.domains}
             categories={catalog.categories}
+            categoriesByDomain={catalog.categoriesByDomain}
             search={catalog.search}
             ensureLoaded={catalog.ensureLoaded}
             onAddFood={handleAddFood}

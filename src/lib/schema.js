@@ -60,6 +60,23 @@ export const COLUMNS = {
 
 export const UNIT_OPTIONS = ['pezzi', 'kg', 'g', 'l', 'ml', 'buste', 'scatole'];
 
+/**
+ * Domini del catalogo, nell'ordine in cui li mostra la navigazione.
+ *
+ * `food` sono i commestibili: hanno valori nutrizionali per 100g, presi da
+ * USDA. `house` sono i prodotti non commestibili (detersivi, carta,
+ * casalinghi): non esistono calorie per queste cose, quindi nel catalogo i
+ * nutrienti sono null.
+ *
+ * Il dominio serve a raggruppare la ricerca. A decidere se mostrare le
+ * calorie non serve il dominio ma la nutrizione: una voce aggiunta a mano
+ * senza calorie non ha dominio, e resta senza calorie.
+ */
+export const DOMAIN_OPTIONS = [
+  { id: 'food', label: 'Cibo' },
+  { id: 'house', label: 'Casa' },
+];
+
 export const CATEGORY_OPTIONS = [
   'Frutta e verdura',
   'Carne e pesce',
