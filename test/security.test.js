@@ -59,7 +59,6 @@ const sources = [
   'src/hooks/useShoppingList.js',
   'src/hooks/useSavedProducts.js',
   'src/hooks/useFoodCatalog.js',
-  'src/hooks/useOfflineSync.js',
   'index.html',
 ].map(read).join('\n');
 

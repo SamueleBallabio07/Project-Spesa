@@ -20,12 +20,24 @@ VITE_SUPABASE_ANON_KEY=tua-anon-key
 
 ## Database
 
-Esegui in ordine, nel SQL Editor di Supabase:
+Un solo file, da eseguire nel SQL Editor di Supabase:
 
-| File | Cosa fa |
-|------|---------|
-| `database/schema.sql` | Tabelle core, RLS, indici, storage avatar |
-| `database/remove-duplicates.sql` | Pulisce i prodotti duplicati |
+```bash
+database/schema.sql
+```
+
+Contiene tutto quello che serve, nell'ordine in cui va eseguito:
+
+| Cosa | Contenuto |
+|------|-----------|
+| Tabelle | `profiles`, `shopping_lists`, `shopping_items`, `saved_products` |
+| Indici | su proprietario, lista e stato di acquisto |
+| RLS | attiva su ogni tabella, con policy che verificano `auth.uid()` |
+| Trigger | `created_at` automatico |
+| Storage | bucket `avatars`, privato, con policy per cartella utente |
+| Funzioni | `add_or_update_item` e `save_product_for_reuse`, le due RPC che il frontend chiama per salvare. **Senza, l'app non salva nulla** |
+
+È idempotente: puoi rieseguirlo quante volte vuoi senza errori.
 
 Nel database stanno solo i tuoi dati: liste, prodotti, prodotti usati in precedenza.
 Il **catalogo alimentare non è nel database**.
@@ -37,24 +49,36 @@ pubblico dominio (CC0 1.0). Non sono stime: sono analisi di laboratorio o calcol
 dell'USDA.
 
 Il catalogo è un **file statico** servito dal CDN: nessuna tabella, nessuna
-query, nessuna chiave API. ~7.500 alimenti compressi in 240 KB, scaricati solo
-alla prima apertura della scheda Prodotti e poi tenuti in cache dal service
-worker, quindi funziona anche offline.
+query, nessuna chiave API. 237 alimenti curati in italiano, ~10 KB gzip,
+scaricati solo alla prima apertura della scheda Prodotti e poi tenuti in cache
+dal service worker, quindi funziona anche offline.
 
 Per rigenerarlo:
 
 ```bash
-curl -sL -o sr.zip \
-  "https://fdc.nal.usda.gov/fdc-datasets/FoodData_Central_sr_legacy_food_csv_2018-04.zip"
-unzip -q sr.zip
-node scripts/build-catalog.mjs
+npm run build:catalog
 ```
 
-Lo script unisce quattro CSV (`food`, `food_nutrient`, `food_portion`,
-`food_category`), estrae i cinque nutrienti necessari e sceglie il peso di "un
-pezzo" dalle porzioni USDA scartando quelle in volume. Poi scrive
-`public/catalog.json`, versionato con il codice: per aggiornare i valori basta
-`npm run build` e il deploy.
+Lo script legge due file e non interroghi mai il database:
+
+- `database/staples-queries.json`: l'artefact curato, 326 nomi italiani
+  abbinati alla ricerca USDA, con override e categorie
+- `data/usda.json`: l'estratto dei dati USDA (7.518 voci)
+
+Per ogni voce sceglie il candidato più plausibile, applica gli override dove
+serve, e scrive `public/catalog.json`, versionato con il codice: per
+aggiornare i valori basta `npm run build` e il deploy.
+
+Il primo passaggio, cioè l'estrazione di `data/usda.json` dagli ZIP USDA, non
+c'è più: lo script che lo faceva è stato rimosso e i CSV originali non sono
+tracciati. Per ora puoi aggiornare i valori solo passando da
+`database/staples-queries.json`. Se ti servono i CSV di partenza:
+
+```bash
+curl -sL -o sr.zip \
+  "https://fdc.nal.usda.gov/fdc-datasets/FoodData_Central_sr_legacy_food_csv_2018-04.zip"
+unzip -q sr.zip   # sono in ~/.gitignore, non finiscono nel repo
+```
 
 Note sui dati:
 
@@ -75,16 +99,28 @@ src/
     ShoppingList.jsx   → scheda Liste
     CatalogScreen.jsx  → scheda Prodotti (catalogo)
     TabBar.jsx         → navigazione inferiore iOS
+    FoodCard.jsx       → riga prodotto, con calorie e macronutrienti
+    QuantityEditor.jsx → quantità scrivibile a mano
+    UnitPicker.jsx     → selettore di unità
+    SearchBar.jsx      → barra di ricerca
+    EmptyState.jsx     → stati vuoti
+    ThemeToggle.jsx    → chiaro/scuro
   hooks/
     useAuth.js          → sessione e profilo
     useShoppingList.js  → liste e prodotti
     useSavedProducts.js → prodotti usati in passato
     useFoodCatalog.js   → catalogo, categorie, ricerca
-    useOfflineSync.js   → stato rete e coda offline
+    useStepper.js       → quantità e unità scelte nei prodotti
+    useTheme.js         → tema chiaro/scuro
   lib/
     schema.js    → nomi tabelle e colonne
     nutrition.js → conversioni e formattazione valori
+    units.js     → unità disponibili e conversioni fra unità
+    quantity.js  → arrotondamento e parsing delle quantità
     supabase.js  → client
+test/            → vitest: nutrition, quantity, units, schema, security, wiring
+scripts/         → build-catalog.mjs, make-icons.mjs
+database/        → schema.sql (unico file SQL) e staples-queries.json
 ```
 
 ## Come funziona il catalogo
@@ -99,7 +135,7 @@ in grammi e ricalcola:
 
 - Login con email e password
 - Più liste della spesa, creazione ed eliminazione
-- Catalogo di ~7.500 alimenti generici con valori USDA, ricerca senza accenti
+- Catalogo di 237 alimenti generici con valori USDA, ricerca senza accenti
 - Stepper per la quantità con ricalcolo immediato di calorie e macronutrienti
 - Aggiunta manuale come alternativa al catalogo
 - Autocompletamento dai prodotti usati in precedenza
@@ -110,6 +146,6 @@ in grammi e ricalcola:
 ## Script
 
 ```bash
-node scripts/make-icons.mjs     # rigenera le icone PNG dell'app
-node scripts/build-catalog.mjs  # rigenera public/catalog.json dagli ZIP USDA
+npm run icons         # rigenera le icone PNG dell'app
+npm run build:catalog # rigenera public/catalog.json
 ```

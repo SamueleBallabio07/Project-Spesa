@@ -107,6 +107,10 @@ describe('le callback non leggono uno snapshot stale dello stato', () => {
   // Per ogni hook lo stato di cui le callback non possono dipendere.
   const STALE_PRONE = [
     { file: 'src/hooks/useShoppingList.js', state: 'items', expected: ['toggleItem', 'updateItem', 'removeItem'] },
+    // deleteList salva la lista in arrivo per poterla reinserire se la
+    // cancellazione fallisce: se la closure congela un `lists` vecchio, il
+    // rollback mette in lista una versione superata.
+    { file: 'src/hooks/useShoppingList.js', state: 'lists', expected: ['deleteList'] },
     { file: 'src/hooks/useStepper.js', state: 'unitSelections', expected: ['pickQty', 'getCurrentUnit', 'getStepForCurrentUnit'] },
   ];
 

@@ -1,13 +1,13 @@
 /**
  * Costruisce public/catalog.json a partire dal catalogo curato in italiano.
  *
- *   node scripts/build-catalog.mjs
+ *   npm run build:catalog
  *
  * I valori nutrizionali vengono da USDA FoodData Central (SR Legacy) e non
  * sono stime: analisi di laboratorio o calcoli dell'USDA.
  *
- *   1. legge data/usda.json, l'estratto completo di USDA
- *      (rigenerabile con scripts/extract-usda.mjs)
+ *   1. legge data/usda.json, l'estratto completo di USDA. Non c'e' piu' uno
+ *      script che lo produca dagli ZIP: rigenerarlo e' un passaggio manuale
  *   2. legge database/staples-queries.json, che e' l'artefatto curato:
  *      nome italiano -> ricerca USDA
  *   3. risolve ogni ricerca scegliendo la voce che inizia col primo

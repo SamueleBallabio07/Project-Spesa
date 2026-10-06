@@ -28,6 +28,12 @@ npm run lint && npm test -- --run && npm run build
 Tutti e tre verdi. Se un comando fallisce per un motivo che hai introdotto tu,
 correggi: non lasciare il fallimento e non "risolverlo" con `--force`.
 
+**Un warning è un errore.** `npm run lint` usa `--deny-warnings`, quindi
+fallisce anche se l'output mostra solo warning: zero warning, zero errori.
+Non spegnere la regola per far passare il lint: correggi il codice, e se
+l'eccezione è inevitabile e documentata, usa `// oxlint-disable-next-line` con
+il perché accanto.
+
 ## Architettura
 
 - Il **catalogo alimentare non è nel database**. È `public/catalog.json`, un
@@ -42,7 +48,7 @@ correggi: non lasciare il fallimento e non "risolverlo" con `--force`.
 - `src/lib/schema.js` deve corrispondere **esattamente** a `database/schema.sql`:
   nomi di tabelle e colonne. Modifiche allo schema si fanno su entrambi.
 - Il DB è Supabase e la sicurezza poggia **interamente sulle RLS**. Ogni
-  tabella nuova o policy nuova va accompanied da `ENABLE ROW LEVEL SECURITY` e
+  tabella nuova o policy nuova va accompagnata da `ENABLE ROW LEVEL SECURITY` e
   da policy che verifichino `auth.uid()`. Vedi `.opencode/skills/supabase-change`.
 - Il client usa solo la chiave publishable (`sb_publishable_…`), pubblica per
   design. Nessuna chiave `service_role` nel frontend, mai.
@@ -67,8 +73,9 @@ correggi: non lasciare il fallimento e non "risolverlo" con `--force`.
   spetta all'utente nel SQL Editor di Supabase.
 - Non aggiungere dipendenze senza chiedere. Giustifica prima la necessità.
 - Non modificare `.github/workflows/` senza chiedere.
-- Non eliminare `data/usda.json` né la cartella `FoodData_Central_sr_legacy_food_csv_2018-04/`
-  (gitignored, serve a rigenerare il catalogo).
+- Non eliminare `data/usda.json`: è l'unico input di `npm run build:catalog`
+  insieme a `database/staples-queries.json`. I CSV USDA originali non sono
+  tracciati e non servono: se ti servono, si riscaricano dal sito dell'USDA.
 
 ## Git
 
