@@ -1,0 +1,1866 @@
+{
+  "_readme": [
+    "Artefatto curato del catalogo. Ogni voce e' un prodotto base, con un",
+    "nome in italiano e una sola riga: niente varianti, niente marchi.",
+    "",
+    "CIELO: i valori nutrizionali per 100g vengono risolti da USDA",
+    "FoodData Central (SR Legacy) tramite scripts/build-catalog.mjs.",
+    "",
+    "queries    -> ricerca USDA per scegliere la voce giusta",
+    "cats       -> categoria italiana mostrata nell'app",
+    "overrides  -> query alternativa quando la scelta automatica sbaglia;",
+    "              null = escluso di proposito (USDA ha solo marche)",
+    "manual     -> valori scritti a mano per cose che USDA non ha,",
+    "              ma che sono comunque cibo (torta, nutella, caffè)",
+    "",
+    "CASA: voci non commestibili. Non hanno valori nutrizionali e non",
+    "passano da USDA: ogni voce porta la sua categoria e la sua unita'.",
+    "build-catalog.mjs rifiuta una voce house che abbia campi nutrizionali.",
+    "",
+    "Per rigenerare: npm run build:catalog"
+  ],
+  "cats": {
+    "Uova": "Uova",
+    "Albumi": "Uova",
+    "Tuorli": "Uova",
+    "Latte intero": "Latte e latticini",
+    "Latte scremato": "Latte e latticini",
+    "Latte di soia": "Latte e latticini",
+    "Burro": "Latte e latticini",
+    "Parmigiano": "Latte e latticini",
+    "Mozzarella": "Latte e latticini",
+    "Ricotta": "Latte e latticini",
+    "Yogurt intero": "Latte e latticini",
+    "Yogurt greco": "Latte e latticini",
+    "Gruccione": "Latte e latticini",
+    "Philadelphia": "Latte e latticini",
+    "Gorgonzola": "Latte e latticini",
+    "Taleggio": "Latte e latticini",
+    "Pecorino": "Latte e latticini",
+    "Fontina": "Latte e latticini",
+    "Provola": "Latte e latticini",
+    "Scamorza": "Latte e latticini",
+    "Stracchino": "Latte e latticini",
+    "Crescenza": "Latte e latticini",
+    "Mascarpone": "Latte e latticini",
+    "Robiola": "Latte e latticini",
+    "Tomino": "Latte e latticini",
+    "Caprino": "Latte e latticini",
+    "Pecorino romano": "Latte e latticini",
+    "Pecorino sardo": "Latte e latticini",
+    "Asiago": "Latte e latticini",
+    "Montasio": "Latte e latticini",
+    "Bitto": "Latte e latticini",
+    "Caciocavallo": "Latte e latticini",
+    "Provolone": "Latte e latticini",
+    "Petto di pollo": "Carne",
+    "Coscia di pollo": "Carne",
+    "Macinato di manzo": "Carne",
+    "Macinato di maiale": "Carne",
+    "Braciole di maiale": "Carne",
+    "Prosciutto cotto": "Carne",
+    "Salame": "Carne",
+    "Bacon": "Carne",
+    "Mortadella": "Carne",
+    "Salsiccia": "Carne",
+    "Vitello": "Carne",
+    "Bresaola": "Carne",
+    "Coppa": "Carne",
+    "Culatello": "Carne",
+    "Guanciale": "Carne",
+    "Lardo": "Carne",
+    "Pancetta": "Carne",
+    "Porchetta": "Carne",
+    "Soppressata": "Carne",
+    "Speck": "Carne",
+    "Wurstel": "Carne",
+    "Prosciutto crudo": "Carne",
+    "Lonza": "Carne",
+    "Arrosto di maiale": "Carne",
+    "Arrosto di manzo": "Carne",
+    "Stinco di maiale": "Carne",
+    "Salmone": "Pesce",
+    "Tonno": "Pesce",
+    "Tonno al naturale": "Pesce",
+    "Merluzzo": "Pesce",
+    "Gamberi": "Pesce",
+    "Sarde": "Pesce",
+    "Trota": "Pesce",
+    "Baccalà": "Pesce",
+    "Polpo": "Pesce",
+    "Branzino": "Pesce",
+    "Orata": "Pesce",
+    "Calamari": "Pesce",
+    "Seppie": "Pesce",
+    "Cozze": "Pesce",
+    "Vongole": "Pesce",
+    "Scampi": "Pesce",
+    "Aragosta": "Pesce",
+    "Astice": "Pesce",
+    "Stoccafisso": "Pesce",
+    "Alici": "Pesce",
+    "Sgombro": "Pesce",
+    "Palamita": "Pesce",
+    "Tonno fresco": "Pesce",
+    "Pasta": "Cereali e pasta",
+    "Pasta integrale": "Cereali e pasta",
+    "Riso": "Cereali e pasta",
+    "Riso integrale": "Cereali e pasta",
+    "Pane bianco": "Pane",
+    "Pane integrale": "Pane",
+    "Farina": "Cereali e pasta",
+    "Fiocchi d'avena": "Cereali e pasta",
+    "Couscous": "Cereali e pasta",
+    "Semola": "Cereali e pasta",
+    "Mais": "Verdura",
+    "Polenta": "Cereali e pasta",
+    "Pane toscano": "Pane",
+    "Pane casereccio": "Pane",
+    "Piadina": "Pane",
+    "Focaccia": "Pane",
+    "Grissini": "Pane",
+    "Crackers": "Pane",
+    "Taralli": "Pane",
+    "Bruscitta": "Pane",
+    "Piadina romagnola": "Pane",
+    "Pane pugliese": "Pane",
+    "Pane di Altamura": "Pane",
+    "Pane carasau": "Pane",
+    "Couscous integrale": "Cereali e pasta",
+    "Farro": "Cereali e pasta",
+    "Orzo perlato": "Cereali e pasta",
+    "Quinoa": "Cereali e pasta",
+    "Miglio": "Cereali e pasta",
+    "Amaranto": "Cereali e pasta",
+    "Lenticchie secche": "Legumi",
+    "Fagioli secchi": "Legumi",
+    "Ceci secchi": "Legumi",
+    "Piselli secchi": "Legumi",
+    "Fagioli borlotti": "Legumi",
+    "Fagioli cannellini": "Legumi",
+    "Lenticchie rosse": "Legumi",
+    "Fagioli neri": "Legumi",
+    "Fagioli rossi": "Legumi",
+    "Soia secca": "Legumi",
+    "Fave secche": "Legumi",
+    "Ceci neri": "Legumi",
+    "Cipolle": "Verdura",
+    "Carote": "Verdura",
+    "Pomodori": "Verdura",
+    "Zucchine": "Verdura",
+    "Patate": "Verdura",
+    "Melanzane": "Verdura",
+    "Peperoni": "Verdura",
+    "Broccoli": "Verdura",
+    "Spinaci": "Verdura",
+    "Lattuga": "Verdura",
+    "Sedano": "Verdura",
+    "Cavolfiore": "Verdura",
+    "Funghi": "Verdura",
+    "Zucca": "Verdura",
+    "Aglio": "Verdura",
+    "Cavolo": "Verdura",
+    "Asparagi": "Verdura",
+    "Cetrioli": "Verdura",
+    "Rucola": "Verdura",
+    "Radicchio": "Verdura",
+    "Cicoria": "Verdura",
+    "Bietole": "Verdura",
+    "Carciofi": "Verdura",
+    "Finocchi": "Verdura",
+    "Porri": "Verdura",
+    "Fagiolini": "Verdura",
+    "Piselli freschi": "Verdura",
+    "Pomodorini": "Verdura",
+    "Peperoncini": "Verdura",
+    "Ravanelli": "Verdura",
+    "Sedano rapa": "Verdura",
+    "Topinambur": "Verdura",
+    "Barbabietole": "Verdura",
+    "Cavolo nero": "Verdura",
+    "Cavolo verza": "Verdura",
+    "Catalogna": "Verdura",
+    "Scarola": "Verdura",
+    "Indivia": "Verdura",
+    "Songino": "Verdura",
+    "Zucchine trombetta": "Verdura",
+    "Zucca butternut": "Verdura",
+    "Mele": "Frutta",
+    "Banane": "Frutta",
+    "Arance": "Frutta",
+    "Limoni": "Frutta",
+    "Fragole": "Frutta",
+    "Uva": "Frutta",
+    "Pere": "Frutta",
+    "Pesche": "Frutta",
+    "Kiwi": "Frutta",
+    "Ananas": "Frutta",
+    "Avocado": "Frutta",
+    "Mandarini": "Frutta",
+    "Melone": "Frutta",
+    "Ciliegie": "Frutta",
+    "Prugne": "Frutta",
+    "Albicocche": "Frutta",
+    "Lamponi": "Frutta",
+    "Nespole": "Frutta",
+    "Fichi": "Frutta",
+    "Melograno": "Frutta",
+    "Cachi": "Frutta",
+    "Frutti di bosco": "Frutta",
+    "Mirtilli": "Frutta",
+    "More": "Frutta",
+    "Ribes": "Frutta",
+    "Uva spina": "Frutta",
+    "Pompelmo": "Frutta",
+    "Lime": "Frutta",
+    "Papaya": "Frutta",
+    "Mango": "Frutta",
+    "Fichi d'india": "Frutta",
+    "Datteri": "Frutta",
+    "Fichi secchi": "Frutta",
+    "Albicocche secche": "Frutta",
+    "Prugne secche": "Frutta",
+    "Uvetta": "Frutta",
+    "Zucchero": "Dolci",
+    "Miele": "Dolci",
+    "Cioccolato al latte": "Dolci",
+    "Cioccolato fondente": "Dolci",
+    "Biscotti": "Dolci",
+    "Gelato": "Dolci",
+    "Caffè": "Bevande",
+    "Tè": "Bevande",
+    "Torta": "Dolci",
+    "Cappuccina": "Bevande",
+    "Nutella": "Dolci",
+    "Frollini": "Dolci",
+    "Croissant": "Dolci",
+    "Brioche": "Dolci",
+    "Panettone": "Dolci",
+    "Pandoro": "Dolci",
+    "Colomba": "Dolci",
+    "Tiramisù": "Dolci",
+    "Panna cotta": "Dolci",
+    "Crema caramello": "Dolci",
+    "Budino": "Dolci",
+    "Gelato artigianale": "Dolci",
+    "Cannoli": "Dolci",
+    "Sfogliatelle": "Dolci",
+    "Babà": "Dolci",
+    "Zeppole": "Dolci",
+    "Krapfen": "Dolci",
+    "Muffin": "Dolci",
+    "Cupcake": "Dolci",
+    "Brownies": "Dolci",
+    "Cheesecake": "Dolci",
+    "Profiteroles": "Dolci",
+    "Eclairs": "Dolci",
+    "Olio extravergine di oliva": "Condimenti",
+    "Olio di semi": "Condimenti",
+    "Burro di arachidi": "Condimenti",
+    "Maionese": "Condimenti",
+    "Sale": "Condimenti",
+    "Aceto": "Condimenti",
+    "Ketchup": "Condimenti",
+    "Salsa di soia": "Condimenti",
+    "Peperoncino": "Condimenti",
+    "Pesto": "Condimenti",
+    "Salsa pomodoro": "Condimenti",
+    "Passata di pomodoro": "Condimenti",
+    "Concentrato di pomodoro": "Condimenti",
+    "Capperi": "Condimenti",
+    "Olive": "Condimenti",
+    "Sottaceti": "Condimenti",
+    "Senape": "Condimenti",
+    "Salsa Worcestershire": "Condimenti",
+    "Salsa BBQ": "Condimenti",
+    "Salsa tartara": "Condimenti",
+    "Salsa rosa": "Condimenti",
+    "Aceto balsamico": "Condimenti",
+    "Aceto di mele": "Condimenti",
+    "Salsa di soia dolce": "Condimenti",
+    "Salsa teriyaki": "Condimenti",
+    "Salsa hoisin": "Condimenti",
+    "Gomasio": "Condimenti",
+    "Furikake": "Condimenti",
+    "Acqua": "Bevande",
+    "Bibita cola": "Bevande",
+    "Birra": "Bevande",
+    "Vino rosso": "Bevande",
+    "Vino bianco": "Bevande",
+    "Succo d'arancia": "Bevande",
+    "Succo di limone": "Bevande",
+    "Acqua tonica": "Bevande",
+    "Soda": "Bevande",
+    "Caffè orzo": "Bevande",
+    "Caffè decaffeinato": "Bevande",
+    "Cioccolata calda": "Bevande",
+    "Latte di mandorla": "Bevande",
+    "Latte d'avena": "Bevande",
+    "Latte di riso": "Bevande",
+    "Tè verde": "Bevande",
+    "Tè nero": "Bevande",
+    "Camomilla": "Bevande",
+    "Orzo": "Bevande",
+    "Succo di pomodoro": "Bevande",
+    "Succo ACE": "Bevande",
+    "Acqua frizzante": "Bevande",
+    "Acqua di cocco": "Bevande",
+    "Latte di cocco": "Bevande",
+    "Kefir": "Bevande",
+    "Kombucha": "Bevande",
+    "Succo di mela": "Bevande",
+    "Succo di pera": "Bevande",
+    "Succo di ananas": "Bevande",
+    "Succo di pompelmo": "Bevande",
+    "Uova di quaglia": "Uova",
+    "Pangrattato": "Cereali e pasta",
+    "Lievito": "Cereali e pasta",
+    "Vanillina": "Dolci",
+    "Zucchero a velo": "Dolci",
+    "Cacao amaro": "Dolci",
+    "Cannella": "Condimenti",
+    "Noce moscata": "Condimenti",
+    "Pepe nero": "Condimenti",
+    "Pepe bianco": "Condimenti",
+    "Pepe rosa": "Condimenti",
+    "Curry": "Condimenti",
+    "Paprika": "Condimenti",
+    "Zafferano": "Condimenti",
+    "Origano": "Condimenti",
+    "Basilico": "Condimenti",
+    "Prezzemolo": "Condimenti",
+    "Rosmarino": "Condimenti",
+    "Salvia": "Condimenti",
+    "Timo": "Condimenti",
+    "Alloro": "Condimenti",
+    "Erbe provenzali": "Condimenti",
+    "Erbe aromatiche miste": "Condimenti",
+    "Dado vegetale": "Condimenti",
+    "Dado di carne": "Condimenti",
+    "Brodo vegetale": "Condimenti",
+    "Brodo di carne": "Condimenti",
+    "Salsa di pomodoro pronta": "Condimenti",
+    "Pesto alla genovese": "Condimenti",
+    "Pesto rosso": "Condimenti",
+    "Pesto di pistacchio": "Condimenti",
+    "Pesto di rucola": "Condimenti",
+    "Salsa verde": "Condimenti",
+    "Salsa alle noci": "Condimenti",
+    "Bagna cauda": "Condimenti"
+  },
+  "queries": {
+    "Uova": "egg whole raw fresh",
+    "Albumi": "egg white raw fresh",
+    "Tuorli": "egg yolk raw fresh",
+    "Latte intero": "milk whole 3.25 milkfat",
+    "Latte scremato": "milk lowfat fluid 1",
+    "Latte di soia": "soy milk",
+    "Burro": "butter salted",
+    "Parmigiano": "cheese parmesan grated",
+    "Mozzarella": "cheese mozzarella whole milk",
+    "Ricotta": "cheese ricotta whole milk",
+    "Yogurt intero": "yogurt plain whole milk",
+    "Yogurt greco": "yogurt greek plain",
+    "Gruccione": "cheese gruyere",
+    "Philadelphia": "cheese cream",
+    "Gorgonzola": "cheese gorgonzola",
+    "Taleggio": "cheese taleggio",
+    "Pecorino": "cheese pecorino",
+    "Fontina": "cheese fontina",
+    "Provola": "cheese provolone",
+    "Scamorza": "cheese scamorza",
+    "Stracchino": "cheese stracchino",
+    "Crescenza": "cheese crescenza",
+    "Mascarpone": "cheese mascarpone",
+    "Robiola": "cheese robiola",
+    "Tomino": "cheese tomino",
+    "Caprino": "cheese goat soft",
+    "Pecorino romano": "cheese pecorino romano",
+    "Pecorino sardo": "cheese pecorino sardo",
+    "Asiago": "cheese asiago",
+    "Montasio": "cheese montasio",
+    "Bitto": "cheese bitto",
+    "Caciocavallo": "cheese caciocavallo",
+    "Provolone": "cheese provolone",
+    "Petto di pollo": "chicken breast skinless boneless raw",
+    "Coscia di pollo": "chicken leg quarter raw",
+    "Macinato di manzo": "beef ground 85 lean raw",
+    "Macinato di maiale": "pork ground raw",
+    "Braciole di maiale": "pork loin raw",
+    "Prosciutto cotto": "ham cured cooked lean",
+    "Salame": "salami dry hard pork",
+    "Bacon": "bacon pork",
+    "Mortadella": "mortadella beef pork",
+    "Salsiccia": "sausage italian pork raw",
+    "Vitello": "veal raw lean",
+    "Bresaola": "beef bresaola",
+    "Coppa": "pork coppa",
+    "Culatello": "pork culatello",
+    "Guanciale": "pork guanciale",
+    "Lardo": "pork lard",
+    "Pancetta": "pork pancetta",
+    "Porchetta": "pork porchetta",
+    "Soppressata": "soppressata",
+    "Speck": "speck",
+    "Wurstel": "frankfurter",
+    "Prosciutto crudo": "prosciutto parma",
+    "Lonza": "pork loin lean",
+    "Arrosto di maiale": "pork roast",
+    "Arrosto di manzo": "beef roast",
+    "Stinco di maiale": "pork shank",
+    "Salmone": "salmon raw",
+    "Tonno": "tuna light canned in oil drained",
+    "Tonno al naturale": "tuna light canned in water without salt",
+    "Merluzzo": "cod atlantic raw",
+    "Gamberi": "shrimp raw",
+    "Sarde": "sardine canned in oil drained",
+    "Trota": "trout rainbow raw",
+    "Baccalà": "cod dried salted",
+    "Polpo": "octopus raw",
+    "Branzino": "seabass raw",
+    "Orata": "seabream raw",
+    "Calamari": "squid raw",
+    "Seppie": "cuttlefish raw",
+    "Cozze": "mussel blue raw",
+    "Vongole": "clam raw",
+    "Scampi": "shrimp scampi raw",
+    "Aragosta": "lobster raw",
+    "Astice": "lobster spiny raw",
+    "Stoccafisso": "cod dried stockfish",
+    "Alici": "anchovy raw",
+    "Sgombro": "mackerel raw",
+    "Palamita": "bonito raw",
+    "Tonno fresco": "tuna fresh raw",
+    "Pasta": "pasta dry unenriched",
+    "Pasta integrale": "pasta whole grain dry",
+    "Riso": "rice white long-grain raw",
+    "Riso integrale": "rice brown long-grain raw",
+    "Pane bianco": "bread white commercially prepared",
+    "Pane integrale": "bread whole-wheat commercially prepared",
+    "Farina": "wheat flour white all-purpose",
+    "Fiocchi d'avena": "oats rolled regular",
+    "Couscous": "couscous dry",
+    "Semola": "semolina durum wheat",
+    "Mais": "corn sweet yellow raw",
+    "Polenta": "cornmeal yellow",
+    "Pane toscano": "bread tuscan",
+    "Pane casereccio": "bread homemade",
+    "Piadina": "piadina",
+    "Focaccia": "focaccia",
+    "Grissini": "breadstick",
+    "Crackers": "cracker saltine",
+    "Taralli": "taralli",
+    "Bruscitta": "bruschetta",
+    "Piadina romagnola": "piadina romagnola",
+    "Pane pugliese": "bread apulian",
+    "Pane di Altamura": "bread altamura",
+    "Pane carasau": "bread carasau",
+    "Couscous integrale": "couscous whole wheat",
+    "Farro": "farro",
+    "Orzo perlato": "barley pearled",
+    "Quinoa": "quinoa",
+    "Miglio": "millet",
+    "Amaranto": "amaranth",
+    "Lenticchie secche": "lentils raw",
+    "Fagioli secchi": "beans kidney raw",
+    "Ceci secchi": "chickpeas raw",
+    "Piselli secchi": "peas green raw",
+    "Fagioli borlotti": "beans borlotti raw",
+    "Fagioli cannellini": "beans cannellini raw",
+    "Lenticchie rosse": "lentils red",
+    "Fagioli neri": "beans black raw",
+    "Fagioli rossi": "beans red kidney raw",
+    "Soia secca": "soybeans raw",
+    "Fave secche": "broadbeans raw",
+    "Ceci neri": "chickpeas black",
+    "Cipolle": "onions raw",
+    "Carote": "carrots raw",
+    "Pomodori": "tomatoes red ripe raw",
+    "Zucchine": "squash summer zucchini raw",
+    "Patate": "potatoes flesh skin raw",
+    "Melanzane": "eggplant raw",
+    "Peperoni": "peppers sweet red raw",
+    "Broccoli": "broccoli raw",
+    "Spinaci": "spinach raw",
+    "Lattuga": "lettuce green leaf raw",
+    "Sedano": "celery raw",
+    "Cavolfiore": "cauliflower raw",
+    "Funghi": "mushrooms white raw",
+    "Zucca": "squash winter raw",
+    "Aglio": "garlic raw",
+    "Cavolo": "cabbage raw",
+    "Asparagi": "asparagus raw",
+    "Cetrioli": "cucumber raw",
+    "Rucola": "arugula raw",
+    "Radicchio": "radicchio raw",
+    "Cicoria": "chicory raw",
+    "Bietole": "swiss chard raw",
+    "Carciofi": "artichoke raw",
+    "Finocchi": "fennel raw",
+    "Porri": "leek raw",
+    "Fagiolini": "beans snap green raw",
+    "Piselli freschi": "peas green raw",
+    "Pomodorini": "tomatoes cherry raw",
+    "Peperoncini": "pepper hot chili green raw",
+    "Ravanelli": "radish raw",
+    "Sedano rapa": "celeriac raw",
+    "Topinambur": "jerusalem artichoke raw",
+    "Barbabietole": "beet raw",
+    "Cavolo nero": "kale raw",
+    "Cavolo verza": "cabbage savoy raw",
+    "Catalogna": "catalogna raw",
+    "Scarola": "escarole raw",
+    "Indivia": "endive raw",
+    "Songino": "corn salad raw",
+    "Zucchine trombetta": "squash trombetta",
+    "Zucca butternut": "squash butternut raw",
+    "Mele": "apples raw with skin",
+    "Banane": "bananas raw",
+    "Arance": "oranges raw",
+    "Limoni": "lemons raw without peel",
+    "Fragole": "strawberries raw",
+    "Uva": "grapes raw",
+    "Pere": "pears raw with skin",
+    "Pesche": "peaches raw",
+    "Kiwi": "kiwifruit raw",
+    "Ananas": "pineapple raw",
+    "Avocado": "avocados raw",
+    "Mandarini": "tangerines raw",
+    "Melone": "melons raw",
+    "Ciliegie": "cherries raw",
+    "Prugne": "plums raw",
+    "Albicocche": "apricots raw",
+    "Lamponi": "raspberries raw",
+    "Nespole": "loquats raw",
+    "Fichi": "figs raw",
+    "Melograno": "pomegranate raw",
+    "Cachi": "persimmon raw",
+    "Frutti di bosco": "berries mixed raw",
+    "Mirtilli": "blueberries raw",
+    "More": "blackberries raw",
+    "Ribes": "currants raw",
+    "Uva spina": "gooseberries raw",
+    "Pompelmo": "grapefruit raw",
+    "Lime": "lime raw",
+    "Papaya": "papaya raw",
+    "Mango": "mango raw",
+    "Fichi d'india": "prickly pear raw",
+    "Datteri": "dates raw",
+    "Fichi secchi": "figs dried",
+    "Albicocche secche": "apricots dried",
+    "Prugne secche": "prunes dried",
+    "Uvetta": "raisins",
+    "Zucchero": "sugars granulated",
+    "Miele": "honey",
+    "Cioccolato al latte": "chocolate milk",
+    "Cioccolato fondente": "chocolate dark 70-85 cacao",
+    "Biscotti": "cookies commercial",
+    "Gelato": "ice cream vanilla",
+    "Caffè": "coffee brewed",
+    "Tè": "tea brewed",
+    "Torta": "cake pound plain",
+    "Cappuccina": "coffee cappuccino",
+    "Nutella": "chocolate hazelnut spread",
+    "Frollini": "cookies commercial",
+    "Croissant": "croissant butter",
+    "Brioche": "brioche",
+    "Panettone": "cake panettone",
+    "Pandoro": "cake pandoro",
+    "Colomba": "cake colomba",
+    "Tiramisù": "tiramisu",
+    "Panna cotta": "panna cotta",
+    "Crema caramello": "creme caramel",
+    "Budino": "pudding",
+    "Gelato artigianale": "ice cream vanilla",
+    "Cannoli": "cannoli",
+    "Sfogliatelle": "sfogliatelle",
+    "Babà": "baba rum",
+    "Zeppole": "zeppole",
+    "Krapfen": "krapfen",
+    "Muffin": "muffin",
+    "Cupcake": "cupcake",
+    "Brownies": "brownie",
+    "Cheesecake": "cheesecake",
+    "Profiteroles": "profiteroles",
+    "Eclairs": "eclair",
+    "Olio extravergine di oliva": "olive oil",
+    "Olio di semi": "oil corn canola",
+    "Burro di arachidi": "peanut butter smooth",
+    "Maionese": "salad dressing mayonnaise",
+    "Sale": "salt table",
+    "Aceto": "vinegar cider",
+    "Ketchup": "ketchup",
+    "Salsa di soia": "sauce soy",
+    "Peperoncino": "peppers hot chili red raw",
+    "Pesto": "pesto genovese",
+    "Salsa pomodoro": "tomato sauce",
+    "Passata di pomodoro": "tomato puree",
+    "Concentrato di pomodoro": "tomato paste",
+    "Capperi": "capers",
+    "Olive": "olives ripe",
+    "Sottaceti": "pickles",
+    "Senape": "mustard prepared",
+    "Salsa Worcestershire": "worcestershire sauce",
+    "Salsa BBQ": "barbecue sauce",
+    "Salsa tartara": "tartar sauce",
+    "Salsa rosa": "russian dressing",
+    "Aceto balsamico": "vinegar balsamic",
+    "Aceto di mele": "vinegar cider",
+    "Salsa di soia dolce": "sauce soy sweet",
+    "Salsa teriyaki": "teriyaki sauce",
+    "Salsa hoisin": "hoisin sauce",
+    "Gomasio": "gomasio",
+    "Furikake": "furikake",
+    "Acqua": "water",
+    "Bibita cola": "cola carbonated regular",
+    "Birra": "beer regular",
+    "Vino rosso": "wine red table",
+    "Vino bianco": "wine white table",
+    "Succo d'arancia": "orange juice raw",
+    "Succo di limone": "lemon juice raw",
+    "Acqua tonica": "tonic water",
+    "Soda": "soda lemon-lime",
+    "Caffè orzo": "beverage barley",
+    "Caffè decaffeinato": "coffee brewed decaffeinated",
+    "Cioccolata calda": "cocoa mix",
+    "Latte di mandorla": "almond milk",
+    "Latte d'avena": "oat milk",
+    "Latte di riso": "rice milk",
+    "Tè verde": "tea green brewed",
+    "Tè nero": "tea black brewed",
+    "Camomilla": "tea chamomile",
+    "Orzo": "beverage barley",
+    "Succo di pomodoro": "tomato juice",
+    "Succo ACE": "juice ace",
+    "Acqua frizzante": "water carbonated",
+    "Acqua di cocco": "coconut water",
+    "Latte di cocco": "coconut milk",
+    "Kefir": "kefir",
+    "Kombucha": "kombucha",
+    "Succo di mela": "apple juice",
+    "Succo di pera": "pear juice",
+    "Succo di ananas": "pineapple juice",
+    "Succo di pompelmo": "grapefruit juice",
+    "Uova di quaglia": "egg quail raw",
+    "Pangrattato": "bread crumbs dry grated",
+    "Lievito": "leavening agents yeast bakers active dry",
+    "Vanillina": "vanilla extract",
+    "Zucchero a velo": "sugar powdered",
+    "Cacao amaro": "cocoa powder unsweetened",
+    "Cannella": "cinnamon ground",
+    "Pepe nero": "pepper black",
+    "Pepe bianco": "pepper white",
+    "Pepe rosa": "pepper pink",
+    "Curry": "curry powder",
+    "Paprika": "paprika",
+    "Zafferano": "saffron",
+    "Origano": "oregano dried",
+    "Basilico": "basil dried",
+    "Prezzemolo": "parsley dried",
+    "Rosmarino": "rosemary dried",
+    "Salvia": "sage dried",
+    "Timo": "thyme dried",
+    "Alloro": "bay leaf",
+    "Erbe provenzali": "herbes de provence",
+    "Erbe aromatiche miste": "mixed herbs",
+    "Dado vegetale": "bouillon vegetable",
+    "Dado di carne": "bouillon beef",
+    "Brodo vegetale": "broth vegetable",
+    "Brodo di carne": "broth beef",
+    "Salsa di pomodoro pronta": "tomato sauce ready",
+    "Pesto alla genovese": "pesto genovese",
+    "Pesto rosso": "pesto rosso",
+    "Pesto di pistacchio": "pesto pistachio",
+    "Pesto di rucola": "pesto arugula",
+    "Salsa verde": "salsa verde",
+    "Salsa alle noci": "walnut sauce",
+    "Bagna cauda": "bagna cauda"
+  },
+  "overrides": {
+    "Pane bianco": "bread white commercially prepared",
+    "Farina": "wheat flour white all-purpose",
+    "Cioccolato al latte": "candies milk chocolate",
+    "Olio extravergine di oliva": "olive oil salad or cooking",
+    "Vino rosso": "wine red table",
+    "Vino bianco": "wine white table",
+    "Pere": "pears raw bartlett",
+    "Latte intero": "milk whole 3.25 milkfat",
+    "Tonno": "tuna light canned in oil drained",
+    "Tonno al naturale": "tuna light canned in water without salt",
+    "Bibita cola": "cola carbonated regular",
+    "Latte di soia": null,
+    "Acqua tonica": null,
+    "Salsa di soia": null,
+    "Philadelphia": "cheese cream",
+    "Gorgonzola": "cheese gorgonzola",
+    "Taleggio": "cheese taleggio",
+    "Mascarpone": "cheese mascarpone",
+    "Nutella": "chocolate hazelnut spread",
+    "Pangrattato": "bread crumbs dry grated",
+    "Lievito": "leavening agents yeast bakers active dry",
+    "Zucchero a velo": "sugar powdered",
+    "Cacao amaro": "cocoa powder unsweetened",
+    "Cannella": "cinnamon ground",
+    "Pepe nero": "pepper black",
+    "Caffè orzo": "beverage powder barley",
+    "Caffè decaffeinato": "coffee brewed decaffeinated",
+    "Cioccolata calda": "cocoa mix",
+    "Latte di mandorla": "beverage almond milk",
+    "Latte d'avena": "beverage oat milk",
+    "Latte di riso": "beverage rice milk",
+    "Tè verde": "tea green brewed",
+    "Camomilla": "tea herb chamomile",
+    "Orzo": "beverage powder barley",
+    "Acqua frizzante": "water carbonated",
+    "Croissant": "croissant butter",
+    "Brioche": "brioche",
+    "Panettone": "cake panettone",
+    "Pandoro": "cake pandoro",
+    "Tiramisù": "tiramisu",
+    "Panna cotta": "panna cotta",
+    "Gelato artigianale": "ice cream vanilla",
+    "Uova di quaglia": "egg quail raw"
+  },
+  "manual": {
+    "Acqua": {
+      "unit": "ml",
+      "gpu": 1,
+      "kcal": 0
+    },
+    "Sale": {
+      "unit": "g",
+      "gpu": 1,
+      "kcal": 0
+    },
+    "Caffè": {
+      "unit": "ml",
+      "gpu": 1,
+      "kcal": 0,
+      "p": 0.1,
+      "c": 0,
+      "f": 0,
+      "fib": 0
+    },
+    "Tè": {
+      "unit": "ml",
+      "gpu": 1,
+      "kcal": 0,
+      "p": 0,
+      "c": 0,
+      "f": 0,
+      "fib": 0
+    },
+    "Torta": {
+      "unit": "pezzi",
+      "gpu": 80,
+      "kcal": 260,
+      "p": 4.5,
+      "c": 38,
+      "f": 10,
+      "fib": 1
+    },
+    "Biscotti": {
+      "unit": "pezzi",
+      "gpu": 10,
+      "kcal": 450,
+      "p": 6,
+      "c": 65,
+      "f": 18,
+      "fib": 2.5
+    },
+    "Frollini": {
+      "unit": "pezzi",
+      "gpu": 10,
+      "kcal": 420,
+      "p": 6,
+      "c": 60,
+      "f": 16,
+      "fib": 2
+    },
+    "Cappuccina": {
+      "unit": "ml",
+      "gpu": 1,
+      "kcal": 45,
+      "p": 2,
+      "c": 5,
+      "f": 2,
+      "fib": 0
+    },
+    "Ketchup": {
+      "unit": "g",
+      "gpu": 1,
+      "kcal": 100,
+      "p": 1.5,
+      "c": 25,
+      "f": 0.1,
+      "fib": 0.5
+    },
+    "Fiocchi d'avena": {
+      "unit": "g",
+      "gpu": 1,
+      "kcal": 379,
+      "p": 13,
+      "c": 67,
+      "f": 7,
+      "fib": 10
+    },
+    "Semola": {
+      "unit": "g",
+      "gpu": 1,
+      "kcal": 360,
+      "p": 12,
+      "c": 72,
+      "f": 1,
+      "fib": 3
+    },
+    "Coscia di pollo": {
+      "unit": "g",
+      "gpu": 1,
+      "kcal": 209,
+      "p": 17,
+      "c": 0,
+      "f": 15,
+      "fib": 0
+    },
+    "Zucca": {
+      "unit": "g",
+      "gpu": 1,
+      "kcal": 26,
+      "p": 1,
+      "c": 6,
+      "f": 0.1,
+      "fib": 0.5
+    },
+    "Philadelphia": {
+      "unit": "g",
+      "gpu": 1,
+      "kcal": 253,
+      "p": 6,
+      "c": 5,
+      "f": 24,
+      "fib": 0
+    },
+    "Gorgonzola": {
+      "unit": "g",
+      "gpu": 1,
+      "kcal": 353,
+      "p": 21,
+      "c": 2,
+      "f": 29,
+      "fib": 0
+    },
+    "Taleggio": {
+      "unit": "g",
+      "gpu": 1,
+      "kcal": 315,
+      "p": 19,
+      "c": 0,
+      "f": 26,
+      "fib": 0
+    },
+    "Mascarpone": {
+      "unit": "g",
+      "gpu": 1,
+      "kcal": 429,
+      "p": 4,
+      "c": 4,
+      "f": 44,
+      "fib": 0
+    },
+    "Nutella": {
+      "unit": "g",
+      "gpu": 1,
+      "kcal": 539,
+      "p": 6,
+      "c": 57,
+      "f": 31,
+      "fib": 3
+    },
+    "Pangrattato": {
+      "unit": "g",
+      "gpu": 1,
+      "kcal": 395,
+      "p": 13,
+      "c": 72,
+      "f": 5,
+      "fib": 4
+    },
+    "Lievito": {
+      "unit": "g",
+      "gpu": 1,
+      "kcal": 325,
+      "p": 40,
+      "c": 40,
+      "f": 5,
+      "fib": 26
+    },
+    "Zucchero a velo": {
+      "unit": "g",
+      "gpu": 1,
+      "kcal": 389,
+      "p": 0,
+      "c": 99,
+      "f": 0,
+      "fib": 0
+    },
+    "Cacao amaro": {
+      "unit": "g",
+      "gpu": 1,
+      "kcal": 228,
+      "p": 20,
+      "c": 58,
+      "f": 14,
+      "fib": 33
+    },
+    "Cannella": {
+      "unit": "g",
+      "gpu": 1,
+      "kcal": 247,
+      "p": 4,
+      "c": 81,
+      "f": 1,
+      "fib": 53
+    },
+    "Pepe nero": {
+      "unit": "g",
+      "gpu": 1,
+      "kcal": 251,
+      "p": 10,
+      "c": 64,
+      "f": 3,
+      "fib": 25
+    },
+    "Caffè orzo": {
+      "unit": "ml",
+      "gpu": 1,
+      "kcal": 0
+    },
+    "Caffè decaffeinato": {
+      "unit": "ml",
+      "gpu": 1,
+      "kcal": 0
+    },
+    "Cioccolata calda": {
+      "unit": "ml",
+      "gpu": 1,
+      "kcal": 77,
+      "p": 3,
+      "c": 10,
+      "f": 3,
+      "fib": 1
+    },
+    "Latte di mandorla": {
+      "unit": "ml",
+      "gpu": 1,
+      "kcal": 17,
+      "p": 0.5,
+      "c": 1,
+      "f": 1,
+      "fib": 0
+    },
+    "Latte d'avena": {
+      "unit": "ml",
+      "gpu": 1,
+      "kcal": 43,
+      "p": 1,
+      "c": 7,
+      "f": 1,
+      "fib": 1
+    },
+    "Latte di riso": {
+      "unit": "ml",
+      "gpu": 1,
+      "kcal": 47,
+      "p": 0,
+      "c": 10,
+      "f": 1,
+      "fib": 0
+    },
+    "Tè verde": {
+      "unit": "ml",
+      "gpu": 1,
+      "kcal": 1,
+      "p": 0,
+      "c": 0,
+      "f": 0,
+      "fib": 0
+    },
+    "Camomilla": {
+      "unit": "ml",
+      "gpu": 1,
+      "kcal": 1,
+      "p": 0,
+      "c": 0,
+      "f": 0,
+      "fib": 0
+    },
+    "Orzo": {
+      "unit": "ml",
+      "gpu": 1,
+      "kcal": 1,
+      "p": 0,
+      "c": 0,
+      "f": 0,
+      "fib": 0
+    },
+    "Acqua frizzante": {
+      "unit": "ml",
+      "gpu": 1,
+      "kcal": 0
+    },
+    "Croissant": {
+      "unit": "pezzi",
+      "gpu": 55,
+      "kcal": 231,
+      "p": 5,
+      "c": 26,
+      "f": 12,
+      "fib": 1.5
+    },
+    "Brioche": {
+      "unit": "pezzi",
+      "gpu": 50,
+      "kcal": 290,
+      "p": 7,
+      "c": 35,
+      "f": 14,
+      "fib": 1
+    },
+    "Panettone": {
+      "unit": "pezzi",
+      "gpu": 100,
+      "kcal": 330,
+      "p": 7,
+      "c": 50,
+      "f": 12,
+      "fib": 2
+    },
+    "Pandoro": {
+      "unit": "pezzi",
+      "gpu": 100,
+      "kcal": 390,
+      "p": 7,
+      "c": 55,
+      "f": 16,
+      "fib": 1
+    },
+    "Tiramisù": {
+      "unit": "pezzi",
+      "gpu": 120,
+      "kcal": 240,
+      "p": 5,
+      "c": 28,
+      "f": 13,
+      "fib": 1
+    },
+    "Panna cotta": {
+      "unit": "pezzi",
+      "gpu": 100,
+      "kcal": 180,
+      "p": 4,
+      "c": 15,
+      "f": 12,
+      "fib": 0
+    },
+    "Gelato artigianale": {
+      "unit": "g",
+      "gpu": 1,
+      "kcal": 180,
+      "p": 3,
+      "c": 22,
+      "f": 9,
+      "fib": 0
+    },
+    "Uova di quaglia": {
+      "unit": "pezzi",
+      "gpu": 9,
+      "kcal": 158,
+      "p": 13,
+      "c": 0,
+      "f": 11,
+      "fib": 0
+    }
+  },
+  "house": {
+    "Detersivo piatti": {
+      "cat": "Detersivi",
+      "unit": "pezzi"
+    },
+    "Detersivo lavatrice liquido": {
+      "cat": "Detersivi",
+      "unit": "pezzi"
+    },
+    "Detersivo lavatrice in polvere": {
+      "cat": "Detersivi",
+      "unit": "pezzi"
+    },
+    "Pastiglie lavatrice": {
+      "cat": "Detersivi",
+      "unit": "pezzi"
+    },
+    "Ammorbidente": {
+      "cat": "Detersivi",
+      "unit": "pezzi"
+    },
+    "Ammorbidente concentrato": {
+      "cat": "Detersivi",
+      "unit": "pezzi"
+    },
+    "Incollante da bucato": {
+      "cat": "Detersivi",
+      "unit": "pezzi"
+    },
+    "Sgrassatore multiuso": {
+      "cat": "Detersivi",
+      "unit": "pezzi"
+    },
+    "Sgrassatore forno": {
+      "cat": "Detersivi",
+      "unit": "pezzi"
+    },
+    "Pulitori forni": {
+      "cat": "Detersivi",
+      "unit": "pezzi"
+    },
+    "Braccio anticalcare lavatrice": {
+      "cat": "Detersivi",
+      "unit": "pezzi"
+    },
+    "Filtro lavatrice": {
+      "cat": "Detersivi",
+      "unit": "pezzi"
+    },
+    "Igienizzante multiuso": {
+      "cat": "Detersivi",
+      "unit": "pezzi"
+    },
+    "Candeggina": {
+      "cat": "Detersivi",
+      "unit": "pezzi"
+    },
+    "Igienizzante wc": {
+      "cat": "Detersivi",
+      "unit": "pezzi"
+    },
+    "Saponi da bucato": {
+      "cat": "Detersivi",
+      "unit": "pezzi"
+    },
+    "Detergente per vetri": {
+      "cat": "Detersivi",
+      "unit": "pezzi"
+    },
+    "Cera per pavimenti": {
+      "cat": "Detersivi",
+      "unit": "pezzi"
+    },
+    "Cera parquet": {
+      "cat": "Detersivi",
+      "unit": "pezzi"
+    },
+    "Rinnovatore pavimenti in pietra": {
+      "cat": "Detersivi",
+      "unit": "pezzi"
+    },
+    "Sgrassatore auto": {
+      "cat": "Detersivi",
+      "unit": "pezzi"
+    },
+    "Sacchetti pattumiera": {
+      "cat": "Pulizia casa",
+      "unit": "pezzi"
+    },
+    "Sacchetti freezer": {
+      "cat": "Pulizia casa",
+      "unit": "pezzi"
+    },
+    "Pellicole alimentari": {
+      "cat": "Pulizia casa",
+      "unit": "pezzi"
+    },
+    "Carta alluminio": {
+      "cat": "Pulizia casa",
+      "unit": "pezzi"
+    },
+    "Carta forno": {
+      "cat": "Pulizia casa",
+      "unit": "pezzi"
+    },
+    "Guanti usa e getta": {
+      "cat": "Pulizia casa",
+      "unit": "pezzi"
+    },
+    "Guanti da forno": {
+      "cat": "Pulizia casa",
+      "unit": "pezzi"
+    },
+    "Spugne": {
+      "cat": "Pulizia casa",
+      "unit": "pezzi"
+    },
+    "Spugne abrasive": {
+      "cat": "Pulizia casa",
+      "unit": "pezzi"
+    },
+    "Panni in microfibra": {
+      "cat": "Pulizia casa",
+      "unit": "pezzi"
+    },
+    "Panni multiuso": {
+      "cat": "Pulizia casa",
+      "unit": "pezzi"
+    },
+    "Strofini": {
+      "cat": "Pulizia casa",
+      "unit": "pezzi"
+    },
+    "Cuffie antipolvere": {
+      "cat": "Pulizia casa",
+      "unit": "pezzi"
+    },
+    "Moci con ricambio": {
+      "cat": "Pulizia casa",
+      "unit": "pezzi"
+    },
+    "Secchio": {
+      "cat": "Pulizia casa",
+      "unit": "pezzi"
+    },
+    "Cenerino": {
+      "cat": "Pulizia casa",
+      "unit": "pezzi"
+    },
+    "Set scope e spazzola": {
+      "cat": "Pulizia casa",
+      "unit": "pezzi"
+    },
+    "Rastrello": {
+      "cat": "Pulizia casa",
+      "unit": "pezzi"
+    },
+    "Scopa": {
+      "cat": "Pulizia casa",
+      "unit": "pezzi"
+    },
+    "Scopa robot": {
+      "cat": "Pulizia casa",
+      "unit": "pezzi"
+    },
+    "Turbopulizia": {
+      "cat": "Pulizia casa",
+      "unit": "pezzi"
+    },
+    "Deodorante ambiente": {
+      "cat": "Pulizia casa",
+      "unit": "pezzi"
+    },
+    "Diffusore ambiente": {
+      "cat": "Pulizia casa",
+      "unit": "pezzi"
+    },
+    "Insetticida spray": {
+      "cat": "Pulizia casa",
+      "unit": "pezzi"
+    },
+    "Insetticida piastrine": {
+      "cat": "Pulizia casa",
+      "unit": "pezzi"
+    },
+    "Insetticida aerosol": {
+      "cat": "Pulizia casa",
+      "unit": "pezzi"
+    },
+    "Esca per topi": {
+      "cat": "Pulizia casa",
+      "unit": "pezzi"
+    },
+    "Trappole per insetti": {
+      "cat": "Pulizia casa",
+      "unit": "pezzi"
+    },
+    "Tende antipolvere": {
+      "cat": "Pulizia casa",
+      "unit": "pezzi"
+    },
+    "Zerbino": {
+      "cat": "Pulizia casa",
+      "unit": "pezzi"
+    },
+    "Carta igienica": {
+      "cat": "Carta e fazzoletti",
+      "unit": "pezzi"
+    },
+    "Rotoli di carta igienica": {
+      "cat": "Carta e fazzoletti",
+      "unit": "pezzi"
+    },
+    "Carta asciugamano": {
+      "cat": "Carta e fazzoletti",
+      "unit": "pezzi"
+    },
+    "Carta asciugatrice": {
+      "cat": "Carta e fazzoletti",
+      "unit": "pezzi"
+    },
+    "Fazzoletti di carta": {
+      "cat": "Carta e fazzoletti",
+      "unit": "pezzi"
+    },
+    "Tovaglioli di carta": {
+      "cat": "Carta e fazzoletti",
+      "unit": "pezzi"
+    },
+    "Salviette umidificate": {
+      "cat": "Carta e fazzoletti",
+      "unit": "pezzi"
+    },
+    "Cotone idrofilo": {
+      "cat": "Carta e fazzoletti",
+      "unit": "pezzi"
+    },
+    "Garze": {
+      "cat": "Carta e fazzoletti",
+      "unit": "pezzi"
+    },
+    "Cerotti": {
+      "cat": "Carta e fazzoletti",
+      "unit": "pezzi"
+    },
+    "Plastrine": {
+      "cat": "Carta e fazzoletti",
+      "unit": "pezzi"
+    },
+    "Fornici": {
+      "cat": "Carta e fazzoletti",
+      "unit": "pezzi"
+    },
+    "Shampoo": {
+      "cat": "Igiene personale",
+      "unit": "pezzi"
+    },
+    "Balsamo": {
+      "cat": "Igiene personale",
+      "unit": "pezzi"
+    },
+    "Bagnoschiuma": {
+      "cat": "Igiene personale",
+      "unit": "pezzi"
+    },
+    "Gel doccia": {
+      "cat": "Igiene personale",
+      "unit": "pezzi"
+    },
+    "Sapone liquido per mani": {
+      "cat": "Igiene personale",
+      "unit": "pezzi"
+    },
+    "Sapone intimo": {
+      "cat": "Igiene personale",
+      "unit": "pezzi"
+    },
+    "Dentifricio": {
+      "cat": "Igiene personale",
+      "unit": "pezzi"
+    },
+    "Spazzolino da denti": {
+      "cat": "Igiene personale",
+      "unit": "pezzi"
+    },
+    "Collutorio": {
+      "cat": "Igiene personale",
+      "unit": "pezzi"
+    },
+    "Deodorante": {
+      "cat": "Igiene personale",
+      "unit": "pezzi"
+    },
+    "Profumo": {
+      "cat": "Igiene personale",
+      "unit": "pezzi"
+    },
+    "Crema viso": {
+      "cat": "Igiene personale",
+      "unit": "pezzi"
+    },
+    "Crema mani": {
+      "cat": "Igiene personale",
+      "unit": "pezzi"
+    },
+    "Crema corpo": {
+      "cat": "Igiene personale",
+      "unit": "pezzi"
+    },
+    "Bagnodoccia": {
+      "cat": "Igiene personale",
+      "unit": "pezzi"
+    },
+    "Sapone da barba": {
+      "cat": "Igiene personale",
+      "unit": "pezzi"
+    },
+    "Schiuma da barba": {
+      "cat": "Igiene personale",
+      "unit": "pezzi"
+    },
+    "Rasoi monouso": {
+      "cat": "Igiene personale",
+      "unit": "pezzi"
+    },
+    "Borsacottone": {
+      "cat": "Igiene personale",
+      "unit": "pezzi"
+    },
+    "Assorbenti": {
+      "cat": "Igiene personale",
+      "unit": "pezzi"
+    },
+    "Pannolini": {
+      "cat": "Igiene personale",
+      "unit": "pezzi"
+    },
+    "Pannettoni": {
+      "cat": "Igiene personale",
+      "unit": "pezzi"
+    },
+    "Tamponi": {
+      "cat": "Igiene personale",
+      "unit": "pezzi"
+    },
+    "Tondeuse": {
+      "cat": "Igiene personale",
+      "unit": "pezzi"
+    },
+    "Forbici da capelli": {
+      "cat": "Igiene personale",
+      "unit": "pezzi"
+    },
+    "Spazzola per capelli": {
+      "cat": "Igiene personale",
+      "unit": "pezzi"
+    },
+    "Elastici per capelli": {
+      "cat": "Igiene personale",
+      "unit": "pezzi"
+    },
+    "Pinzette": {
+      "cat": "Igiene personale",
+      "unit": "pezzi"
+    },
+    "Specchio": {
+      "cat": "Igiene personale",
+      "unit": "pezzi"
+    },
+    "Pettine": {
+      "cat": "Igiene personale",
+      "unit": "pezzi"
+    },
+    "Piatti piani": {
+      "cat": "Casa e cucina",
+      "unit": "pezzi"
+    },
+    "Piatti fondi": {
+      "cat": "Casa e cucina",
+      "unit": "pezzi"
+    },
+    "Piatti da dessert": {
+      "cat": "Casa e cucina",
+      "unit": "pezzi"
+    },
+    "Piatti da forno": {
+      "cat": "Casa e cucina",
+      "unit": "pezzi"
+    },
+    "Bicchieri": {
+      "cat": "Casa e cucina",
+      "unit": "pezzi"
+    },
+    "Tazze": {
+      "cat": "Casa e cucina",
+      "unit": "pezzi"
+    },
+    "Tazze da te": {
+      "cat": "Casa e cucina",
+      "unit": "pezzi"
+    },
+    "Bottiglie": {
+      "cat": "Casa e cucina",
+      "unit": "pezzi"
+    },
+    "Forchette": {
+      "cat": "Casa e cucina",
+      "unit": "pezzi"
+    },
+    "Coltelli": {
+      "cat": "Casa e cucina",
+      "unit": "pezzi"
+    },
+    "Cucchiai": {
+      "cat": "Casa e cucina",
+      "unit": "pezzi"
+    },
+    "Coltello da pane": {
+      "cat": "Casa e cucina",
+      "unit": "pezzi"
+    },
+    "Apribottiglie": {
+      "cat": "Casa e cucina",
+      "unit": "pezzi"
+    },
+    "Padelle": {
+      "cat": "Casa e cucina",
+      "unit": "pezzi"
+    },
+    "Pentole": {
+      "cat": "Casa e cucina",
+      "unit": "pezzi"
+    },
+    "Teglie": {
+      "cat": "Casa e cucina",
+      "unit": "pezzi"
+    },
+    "Casserole": {
+      "cat": "Casa e cucina",
+      "unit": "pezzi"
+    },
+    "Coperchi": {
+      "cat": "Casa e cucina",
+      "unit": "pezzi"
+    },
+    "Colini": {
+      "cat": "Casa e cucina",
+      "unit": "pezzi"
+    },
+    "Scolapiatti": {
+      "cat": "Casa e cucina",
+      "unit": "pezzi"
+    },
+    "Stampini per dolci": {
+      "cat": "Casa e cucina",
+      "unit": "pezzi"
+    },
+    "Vaschette": {
+      "cat": "Casa e cucina",
+      "unit": "pezzi"
+    },
+    "Contenitori alimentari": {
+      "cat": "Casa e cucina",
+      "unit": "pezzi"
+    },
+    "Barattoli": {
+      "cat": "Casa e cucina",
+      "unit": "pezzi"
+    },
+    "Canovaccio": {
+      "cat": "Casa e cucina",
+      "unit": "pezzi"
+    },
+    "Canovaccio antifiamma": {
+      "cat": "Casa e cucina",
+      "unit": "pezzi"
+    },
+    "Tovagliette": {
+      "cat": "Casa e cucina",
+      "unit": "pezzi"
+    },
+    "Bavaglino": {
+      "cat": "Casa e cucina",
+      "unit": "pezzi"
+    },
+    "Asciugamani": {
+      "cat": "Casa e cucina",
+      "unit": "pezzi"
+    },
+    "Cuscino": {
+      "cat": "Casa e cucina",
+      "unit": "pezzi"
+    },
+    "Copripoltrona": {
+      "cat": "Casa e cucina",
+      "unit": "pezzi"
+    },
+    "Tende": {
+      "cat": "Casa e cucina",
+      "unit": "pezzi"
+    },
+    "Quadro": {
+      "cat": "Casa e cucina",
+      "unit": "pezzi"
+    },
+    "Orologio": {
+      "cat": "Casa e cucina",
+      "unit": "pezzi"
+    },
+    "Terriccio": {
+      "cat": "Verde e giardinaggio",
+      "unit": "l"
+    },
+    "Concime liquido": {
+      "cat": "Verde e giardinaggio",
+      "unit": "l"
+    },
+    "Concime granulato": {
+      "cat": "Verde e giardinaggio",
+      "unit": "pezzi"
+    },
+    "Piantine": {
+      "cat": "Verde e giardinaggio",
+      "unit": "pezzi"
+    },
+    "Fiori": {
+      "cat": "Verde e giardinaggio",
+      "unit": "pezzi"
+    },
+    "Vasi": {
+      "cat": "Verde e giardinaggio",
+      "unit": "pezzi"
+    },
+    "Seme": {
+      "cat": "Verde e giardinaggio",
+      "unit": "pezzi"
+    },
+    "Forbici da giardinaggio": {
+      "cat": "Verde e giardinaggio",
+      "unit": "pezzi"
+    },
+    "Guanti da giardinaggio": {
+      "cat": "Verde e giardinaggio",
+      "unit": "pezzi"
+    },
+    "Sacco per foglie": {
+      "cat": "Verde e giardinaggio",
+      "unit": "pezzi"
+    },
+    "Vapore da giardino": {
+      "cat": "Verde e giardinaggio",
+      "unit": "pezzi"
+    },
+    "Cibo per cani": {
+      "cat": "Animali",
+      "unit": "pezzi"
+    },
+    "Cibo per gatti": {
+      "cat": "Animali",
+      "unit": "pezzi"
+    },
+    "Lettiera per gatti": {
+      "cat": "Animali",
+      "unit": "l"
+    },
+    "Sabbia per gatti": {
+      "cat": "Animali",
+      "unit": "l"
+    },
+    "Ciotole per animali": {
+      "cat": "Animali",
+      "unit": "pezzi"
+    },
+    "Collari": {
+      "cat": "Animali",
+      "unit": "pezzi"
+    },
+    "Guinzagli": {
+      "cat": "Animali",
+      "unit": "pezzi"
+    },
+    "Coperte per animali": {
+      "cat": "Animali",
+      "unit": "pezzi"
+    },
+    "Giochi per cani": {
+      "cat": "Animali",
+      "unit": "pezzi"
+    },
+    "Tappetino per animali": {
+      "cat": "Animali",
+      "unit": "pezzi"
+    },
+    "Trasportino": {
+      "cat": "Animali",
+      "unit": "pezzi"
+    },
+    "Gabbia per uccelli": {
+      "cat": "Animali",
+      "unit": "pezzi"
+    },
+    "Mangime per uccelli": {
+      "cat": "Animali",
+      "unit": "pezzi"
+    },
+    "Mangime per pesci": {
+      "cat": "Animali",
+      "unit": "pezzi"
+    },
+    "Quaderni": {
+      "cat": "Ufficio e scuola",
+      "unit": "pezzi"
+    },
+    "Blocchi per appunti": {
+      "cat": "Ufficio e scuola",
+      "unit": "pezzi"
+    },
+    "Fogli A4": {
+      "cat": "Ufficio e scuola",
+      "unit": "pezzi"
+    },
+    "Risme di carta": {
+      "cat": "Ufficio e scuola",
+      "unit": "pezzi"
+    },
+    "Cartucce per stampante": {
+      "cat": "Ufficio e scuola",
+      "unit": "pezzi"
+    },
+    "Penne": {
+      "cat": "Ufficio e scuola",
+      "unit": "pezzi"
+    },
+    "Matite": {
+      "cat": "Ufficio e scuola",
+      "unit": "pezzi"
+    },
+    "Gomme da cancellare": {
+      "cat": "Ufficio e scuola",
+      "unit": "pezzi"
+    },
+    "Righelli": {
+      "cat": "Ufficio e scuola",
+      "unit": "pezzi"
+    },
+    "Pastelli": {
+      "cat": "Ufficio e scuola",
+      "unit": "pezzi"
+    },
+    "Buste da spedire": {
+      "cat": "Ufficio e scuola",
+      "unit": "pezzi"
+    },
+    "Buste autoportanti": {
+      "cat": "Ufficio e scuola",
+      "unit": "pezzi"
+    },
+    "Post-it": {
+      "cat": "Ufficio e scuola",
+      "unit": "pezzi"
+    },
+    "Timbro datario": {
+      "cat": "Ufficio e scuola",
+      "unit": "pezzi"
+    },
+    "Spillatrici": {
+      "cat": "Ufficio e scuola",
+      "unit": "pezzi"
+    },
+    "Toner": {
+      "cat": "Ufficio e scuola",
+      "unit": "pezzi"
+    },
+    "Zaino": {
+      "cat": "Ufficio e scuola",
+      "unit": "pezzi"
+    },
+    "Cartella portadocumenti": {
+      "cat": "Ufficio e scuola",
+      "unit": "pezzi"
+    },
+    "Tappetino per mouse": {
+      "cat": "Ufficio e scuola",
+      "unit": "pezzi"
+    },
+    "Pile": {
+      "cat": "Bricolage e utensili",
+      "unit": "pezzi"
+    },
+    "Pile ricaricabili": {
+      "cat": "Bricolage e utensili",
+      "unit": "pezzi"
+    },
+    "Lampadine a led": {
+      "cat": "Bricolage e utensili",
+      "unit": "pezzi"
+    },
+    "Lampadine classiche": {
+      "cat": "Bricolage e utensili",
+      "unit": "pezzi"
+    },
+    "Guanti da lavoro": {
+      "cat": "Bricolage e utensili",
+      "unit": "pezzi"
+    },
+    "Nastro adesivo": {
+      "cat": "Bricolage e utensili",
+      "unit": "pezzi"
+    },
+    "Viti e tasselli": {
+      "cat": "Bricolage e utensili",
+      "unit": "pezzi"
+    },
+    "Tasselli": {
+      "cat": "Bricolage e utensili",
+      "unit": "pezzi"
+    },
+    "Cavo di rete": {
+      "cat": "Bricolage e utensili",
+      "unit": "m"
+    },
+    "Nastro a metro": {
+      "cat": "Bricolage e utensili",
+      "unit": "pezzi"
+    },
+    "Chiavi": {
+      "cat": "Bricolage e utensili",
+      "unit": "pezzi"
+    },
+    "Cacciavite": {
+      "cat": "Bricolage e utensili",
+      "unit": "pezzi"
+    },
+    "Martello": {
+      "cat": "Bricolage e utensili",
+      "unit": "pezzi"
+    },
+    "Pinze": {
+      "cat": "Bricolage e utensili",
+      "unit": "pezzi"
+    },
+    "Sega": {
+      "cat": "Bricolage e utensili",
+      "unit": "pezzi"
+    },
+    "Trapano": {
+      "cat": "Bricolage e utensili",
+      "unit": "pezzi"
+    },
+    "Mensola": {
+      "cat": "Bricolage e utensili",
+      "unit": "pezzi"
+    },
+    "Ganci": {
+      "cat": "Bricolage e utensili",
+      "unit": "pezzi"
+    },
+    "Scale": {
+      "cat": "Bricolage e utensili",
+      "unit": "pezzi"
+    },
+    "Estintore": {
+      "cat": "Bricolage e utensili",
+      "unit": "pezzi"
+    },
+    "Rilevatore di fumo": {
+      "cat": "Bricolage e utensili",
+      "unit": "pezzi"
+    },
+    "Ferro da stiro": {
+      "cat": "Bricolage e utensili",
+      "unit": "pezzi"
+    },
+    "Stiro a vapore": {
+      "cat": "Bricolage e utensili",
+      "unit": "pezzi"
+    },
+    "Asciugacapelli": {
+      "cat": "Bricolage e utensili",
+      "unit": "pezzi"
+    }
+  }
+}

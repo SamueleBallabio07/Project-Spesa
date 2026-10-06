@@ -1,20 +1,27 @@
 /**
- * Costruisce public/catalog.json a partire dal catalogo curato in italiano.
+ * Costruisce public/catalog.json a partire dalla tassonomia curata.
  *
  *   npm run build:catalog
  *
- * I valori nutrizionali vengono da USDA FoodData Central (SR Legacy) e non
- * sono stime: analisi di laboratorio o calcoli dell'USDA.
+ * Il catalogo ha due domini:
+ *
+ *   - `food`: commestibili, con valori nutrizionali per 100g presi da USDA
+ *     FoodData Central (SR Legacy). Non sono stime: analisi di laboratorio o
+ *     calcoli dell'USDA.
+ *   - `house`: prodotti non commestibili (detersivi, carta, casalinghi).
+ *     Non esistono valori nutrizionali per queste cose, quindi non passano da
+ *     USDA e portano `null` al posto dei nutrienti: e' la presenza della
+ *     nutrizione, non il campo `dom`, a dire all'app se mostrare le calorie.
  *
  *   1. legge data/usda.json, l'estratto completo di USDA. Non c'e' piu' uno
  *      script che lo produca dagli ZIP: rigenerarlo e' un passaggio manuale
- *   2. legge database/staples-queries.json, che e' l'artefatto curato:
- *      nome italiano -> ricerca USDA
- *   3. risolve ogni ricerca scegliendo la voce che inizia col primo
+ *   2. legge database/catalog-taxonomy.json, che e' l'artefatto curato
+ *   3. risolve ogni query USDA scegliendo la voce che inizia col primo
  *      termine e non contiene parole da scartare
  *   4. applica gli override per i casi in cui la scelta automatica
  *      non e' quella giusta
- *   5. scrive il JSON e un report da controllare
+ *   5. copia le voci house cosi' come sono
+ *   6. scrive il JSON e un report da controllare
  *
  * Se l'USDA cambia una descrizione, la query smette di risolvere e la voce
  * viene segnalata nel report invece di fallire in silenzio.
@@ -23,8 +30,15 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { gzipSync } from 'node:zlib';
 
-const curated = JSON.parse(readFileSync('database/staples-queries.json', 'utf8'));
-const { queries, overrides = {}, manual = {}, cats = {} } = curated;
+const curated = JSON.parse(readFileSync('database/catalog-taxonomy.json', 'utf8'));
+const { queries, overrides = {}, manual = {}, cats = {}, house = {} } = curated;
+
+/**
+ * Campi nutrizionali di una voce. Una voce house non ne deve avere nessuno:
+ * se un giorno ne ha, non e' un prodotto non commestibile e sta nel blocco
+ * sbagliato. Fallire qui e' meglio che pubblicare calorie inventate.
+ */
+const NUTRIENT_FIELDS = ['kcal', 'p', 'c', 'f', 'fib'];
 
 const BAD = [
   'canned', 'juice', 'infant', 'baby', 'powder', 'dried', 'dehydrated',
@@ -105,6 +119,7 @@ for (const [it, query] of Object.entries(queries)) {
       id: `m${rows.length}`,
       name: it,
       sn: it,
+      dom: 'food',
       cat: category,
       unit: m.unit || 'g',
       gpu: m.gpu ?? 1,
@@ -148,6 +163,7 @@ for (const [it, query] of Object.entries(queries)) {
     id: pick.id,
     name: it,
     sn: it,
+    dom: 'food',
     cat: category,
     unit: countable ? 'pezzi' : 'g',
     gpu: countable ? pick.gpu : 1,
@@ -163,6 +179,57 @@ for (const [it, query] of Object.entries(queries)) {
   report.push({ it, state: 'ok', fdc: pick.id, kcal: pick.kcal, usda: pick.name });
 }
 
+// ---------- case: non commestibili ----------
+//
+// Nessuna risoluzione USDA e nessuna nutrizione: la voce entra cosi' com'e'.
+// Un id prefissato 'h' la distingue dai numeri di fdcId e dai 'm' del blocco
+// manuale, cosi' due voci non possono condividere lo stesso id.
+
+const erroriHouse = [];
+
+for (const [it, h] of Object.entries(house)) {
+  if (!h.cat) erroriHouse.push(`${it}: manca cat`);
+  if (!h.unit) erroriHouse.push(`${it}: manca unit`);
+
+  for (const campo of NUTRIENT_FIELDS) {
+    if (h[campo] !== undefined) {
+      erroriHouse.push(`${it}: campo nutrizionale '${campo}' su una voce non commestibile`);
+    }
+  }
+  if (h.gpu !== undefined) {
+    erroriHouse.push(`${it}: gpu su una voce non commestibile (servirebbe solo per la nutrizione)`);
+  }
+  if (rows.some((r) => r.name === it)) {
+    erroriHouse.push(`${it}: nome duplicato con una voce food`);
+  }
+}
+
+if (erroriHouse.length) {
+  console.error("Il blocco house non e' valido:\n  " + erroriHouse.join('\n  '));
+  process.exit(1);
+}
+
+for (const [it, h] of Object.entries(house)) {
+  rows.push({
+    id: `h${rows.length}`,
+    name: it,
+    sn: it,
+    dom: 'house',
+    cat: h.cat,
+    unit: h.unit,
+    gpu: null,
+    kcal: null,
+    p: null,
+    c: null,
+    f: null,
+    fib: null,
+    size: '',
+    note: h.note,
+  });
+
+  report.push({ it, state: 'house', detail: h.cat });
+}
+
 // ---------- output ----------
 
 const json = JSON.stringify(rows);
@@ -171,9 +238,18 @@ writeFileSync('public/catalog.json', json);
 const gzipBytes = gzipSync(json).length;
 const kb = (n) => `${(n / 1024).toFixed(1)} KB`;
 
-console.log(`public/catalog.json  ${rows.length} voci  ${kb(gzipBytes)} gzip\n`);
+const foodRows = rows.filter((r) => r.dom === 'food').length;
+const houseRows = rows.length - foodRows;
 
-const toCheck = report.filter((r) => r.state !== 'ok');
+console.log(
+  `public/catalog.json  ${rows.length} voci  ${kb(gzipBytes)} gzip`
+  + `  (${foodRows} food, ${houseRows} casa)\n`
+);
+
+const categorie = [...new Set(rows.map((r) => r.cat))].sort();
+console.log(`categorie: ${categorie.length} · ${categorie.join(', ')}\n`);
+
+const toCheck = report.filter((r) => r.state !== 'ok' && r.state !== 'house');
 if (toCheck.length) {
   console.log('--- da controllare ---');
   for (const r of toCheck) console.log(`  ${r.state.padEnd(12)} ${r.it.padEnd(24)} ${r.detail || ''}`);
