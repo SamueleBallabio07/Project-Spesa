@@ -30,6 +30,7 @@ export default function ShoppingList({
   loadingItems,
   error,
   summary,
+  onResetBought,
   onToggleItem,
   onRemoveItem,
   onUpdateItem,
@@ -237,7 +238,17 @@ export default function ShoppingList({
 
             {/* Prodotti nella lista */}
             <section className="section">
-              <h2 className="section-head">Prodotti</h2>
+              <div className="section-head-row">
+                <h2 className="section-head">Prodotti</h2>
+                <button
+                  type="button"
+                  className={`link-btn reset-bought ${summary.bought === 0 ? 'is-invisible' : ''}`}
+                  onClick={() => onResetBought()}
+                  disabled={summary.bought === 0}
+                >
+                  Togli la spunta
+                </button>
+              </div>
               {items.length === 0 ? (
                 <EmptyState
                   title="Lista vuota"

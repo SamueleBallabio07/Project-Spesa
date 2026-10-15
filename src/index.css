@@ -759,6 +759,22 @@ button {
   opacity: 0.5;
 }
 
+/* Toglie la spunta ai comprati: azione di riordino, non distruttiva, quindi
+   testo e non un bottone pieno. 44px di area toccabile ma margini negativi:
+   l'intestazione di sezione non si alza per colpa del tasto. */
+.reset-bought {
+  min-height: var(--tap);
+  margin: -8px 0;
+  padding: 0 4px;
+}
+
+/* Nessun comprato, nessuna azione: trasparente ma al suo posto, così la
+   lista non salta quando la prima spunta lo fa comparire. */
+.reset-bought.is-invisible {
+  opacity: 0;
+  pointer-events: none;
+}
+
 .content {
   flex: 1;
   width: 100%;

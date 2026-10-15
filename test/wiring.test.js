@@ -103,10 +103,27 @@ describe('le callback usate nei componenti arrivano davvero come prop', () => {
   }
 });
 
+describe('il reset delle spunte', () => {
+  it('toglie la spunta con una sola update, non una query per prodotto', () => {
+    // Un reset che cicla sui prodotti farebbe N richieste per una sola
+    // azione dell'utente: qui deve restare una update sola, ristretta ai
+    // comprati della lista attiva.
+    const block = callbacksOf(read('src/hooks/useShoppingList.js')).find(
+      (b) => b.name === 'resetBought'
+    );
+
+    expect(block, 'resetBought non esiste in useShoppingList.js').toBeDefined();
+    expect(block.body).toMatch(/\.eq\(\s*COLUMNS\.SHOPPING_ITEMS\.BOUGHT\s*,\s*true\s*\)/);
+
+    const updates = block.body.match(/\.update\(/g) ?? [];
+    expect(updates).toHaveLength(1);
+  });
+});
+
 describe('le callback non leggono uno snapshot stale dello stato', () => {
   // Per ogni hook lo stato di cui le callback non possono dipendere.
   const STALE_PRONE = [
-    { file: 'src/hooks/useShoppingList.js', state: 'items', expected: ['toggleItem', 'updateItem', 'removeItem'] },
+    { file: 'src/hooks/useShoppingList.js', state: 'items', expected: ['toggleItem', 'updateItem', 'removeItem', 'resetBought'] },
     // deleteList salva la lista in arrivo per poterla reinserire se la
     // cancellazione fallisce: se la closure congela un `lists` vecchio, il
     // rollback mette in lista una versione superata.

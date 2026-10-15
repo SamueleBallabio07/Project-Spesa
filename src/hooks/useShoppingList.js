@@ -352,6 +352,47 @@ export function useShoppingList(session, ensureProfile) {
     [selectedListId]
   );
 
+  /**
+   * Toglie la spunta ai comprati della lista attiva, senza toccare i
+   * prodotti. Una sola update con filtro su bought: un ciclo sui prodotti
+   * farebbe N richieste per una sola azione dell'utente.
+   */
+  const resetBought = useCallback(
+    async () => {
+      if (!supabase || !selectedListId) return false;
+
+      const snapshot = itemsRef.current.filter((item) => item.bought);
+      if (snapshot.length === 0) return true;
+
+      // Optimistic: la spunta sparisce subito, il resto della riga resta.
+      setItems((current) =>
+        current.map((item) => (item.bought ? { ...item, bought: false } : item))
+      );
+
+      try {
+        const { error: updateError } = await supabase
+          .from(TABLES.SHOPPING_ITEMS)
+          .update({ [COLUMNS.SHOPPING_ITEMS.BOUGHT]: false })
+          .eq(COLUMNS.SHOPPING_ITEMS.LIST_ID, selectedListId)
+          .eq(COLUMNS.SHOPPING_ITEMS.BOUGHT, true);
+
+        if (updateError) throw updateError;
+        setError('');
+        return true;
+      } catch (err) {
+        // Rollback mirato: rispunto solo quello che era comprato davvero,
+        // non tutto quello che è cambiato nel frattempo.
+        const wasBought = new Set(snapshot.map((item) => item.id));
+        setItems((current) =>
+          current.map((item) => (wasBought.has(item.id) ? { ...item, bought: true } : item))
+        );
+        setError(err.message || 'Errore durante il reset delle spunte.');
+        return false;
+      }
+    },
+    [selectedListId]
+  );
+
   const createList = useCallback(
     async (name) => {
       if (!supabase || !session) return null;
@@ -464,6 +505,7 @@ export function useShoppingList(session, ensureProfile) {
     toggleItem,
     removeItem,
     updateItem,
+    resetBought,
     createList,
     switchList,
     deleteList,

@@ -88,6 +88,7 @@ export default function App() {
             onToggleItem={list.toggleItem}
             onRemoveItem={list.removeItem}
             onUpdateItem={list.updateItem}
+            onResetBought={list.resetBought}
             onCreateList={list.createList}
             onSwitchList={list.switchList}
             onDeleteList={list.deleteList}
