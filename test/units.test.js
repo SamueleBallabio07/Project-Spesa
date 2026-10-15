@@ -107,6 +107,13 @@ describe('stepForUnit', () => {
     expect(stepForUnit('kg')).toBe(0.1);
     expect(stepForUnit('l')).toBe(0.1);
   });
+
+  it('conta a uno le unita\' di conteggio che non sono pezzi', () => {
+    // I vecchi prodotti possono avere unita' come buste o scatole: con il
+    // passo dei grammi (10) un tocco aggiungerebbe dieci confezioni.
+    expect(stepForUnit('buste')).toBe(1);
+    expect(stepForUnit('scatole')).toBe(1);
+  });
 });
 
 describe('sizeLabelInItalian', () => {

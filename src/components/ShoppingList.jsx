@@ -6,6 +6,7 @@ import { EmptyState } from './EmptyState';
 import { QuantityEditor } from './QuantityEditor';
 import { useStepper } from '../hooks/useStepper';
 import { MIN_QUANTITY, roundQuantity } from '../lib/quantity';
+import { stepForUnit } from '../lib/units';
 
 const UNIT_LABELS = {
   pezzo: 'pezzo',
@@ -267,13 +268,17 @@ export default function ShoppingList({
                         </div>
 
                         <div className="item-quantity">
+                          {/* Il passo segue l'unità: 10 g, 0,1 kg, 1 pezzo. */}
                           <div className="stepper">
                             <button
                               type="button"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 onUpdateItem(item.id, {
-                                  quantity: Math.max(MIN_QUANTITY, roundQuantity(item.quantity - 1)),
+                                  quantity: Math.max(
+                                    MIN_QUANTITY,
+                                    roundQuantity(item.quantity - stepForUnit(item.unit))
+                                  ),
                                 });
                               }}
                               aria-label={`Diminuisci quantità di ${item.name}`}
@@ -311,7 +316,7 @@ export default function ShoppingList({
                               onClick={(e) => {
                                 e.stopPropagation();
                                 onUpdateItem(item.id, {
-                                  quantity: roundQuantity(item.quantity + 1),
+                                  quantity: roundQuantity(item.quantity + stepForUnit(item.unit)),
                                 });
                               }}
                               aria-label={`Aumenta quantità di ${item.name}`}

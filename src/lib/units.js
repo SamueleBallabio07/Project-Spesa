@@ -45,13 +45,15 @@ const SIZE_MAX_LENGTH = 20;
 /**
  * Passo dello stepper per unita'.
  *
- * 10 per i pesi e i volumi in scala piccola, 0.1 per kg e litri, 1 per i
- * pezzi. Con 1 su tutto, 0.1 kg si raggiungeva solo digitandolo a mano.
+ * 10 per i pesi e i volumi in scala piccola, 0.1 per kg e litri, 1 per le
+ * unita' di conteggio (pezzi, buste, scatole). Con 1 su tutto, 0.1 kg si
+ * raggiungeva solo digitandolo a mano; con 10 sulle unita' di conteggio un
+ * tocco aggiungerebbe dieci buste.
  */
 export function stepForUnit(unit) {
-  if (unit === 'pezzi') return 1;
   if (unit === 'kg' || unit === 'l') return 0.1;
-  return 10;
+  if (unit === 'g' || unit === 'ml') return 10;
+  return 1;
 }
 
 /** Grammi corrispondenti a una quantita' nell'unita' data. */
